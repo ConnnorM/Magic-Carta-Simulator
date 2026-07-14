@@ -2,8 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Card : MonoBehaviour
+[CreateAssetMenu(fileName = "NewCard", menuName = "Magic Carta/Card")]
+public class Card : ScriptableObject
 {
+    [SerializeField] private int id;
+    [SerializeField] private string cardName;
+    [SerializeField] private AudioClip voice1;
+    [SerializeField] private AudioClip voice2;
+    [SerializeField] private Sprite art;
+
+    public int Id => id;
+    public string CardName => cardName;
+    public AudioClip Voice1 => voice1;
+    public AudioClip Voice2 => voice2;
+    public Sprite Art => art;
     // Start is called before the first frame update
     void Start()
     {
