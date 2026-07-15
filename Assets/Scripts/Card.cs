@@ -20,15 +20,15 @@ public class Card : ScriptableObject
     public string Text1 => text1;
     public string Text2 => text2;
     public Sprite Art => art;
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
-    // Update is called once per frame
-    void Update()
+    public void Init(int id, string cardName, AudioClip voice1, AudioClip voice2, string text1, string text2, Sprite art)
     {
-        
+        this.id = id;
+        this.cardName = cardName;
+        this.voice1 = voice1;
+        this.voice2 = voice2;
+        this.text1 = text1;
+        this.text2 = text2;
+        this.art = art;
     }
 }
