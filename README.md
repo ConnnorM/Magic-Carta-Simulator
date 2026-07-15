@@ -10,5 +10,6 @@ Remaking the greatest mini game of all time from Tales of Graces F for online pl
 - Create gameplay loop
 - Randomize + polish gameplay
 ## Ideas:
-- 
+- Stat Tracker:
+  - % Accuracy per card, per player, card per player
   
