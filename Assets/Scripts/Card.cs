@@ -1,27 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NewCard", menuName = "Magic Carta/Card")]
-public class Card : ScriptableObject
+public class Card
 {
-    [SerializeField] private int id;
-    [SerializeField] private string cardName;
-    [SerializeField] private AudioClip voice1;
-    [SerializeField] private AudioClip voice2;
-    [SerializeField] private string text1;
-    [SerializeField] private string text2;
-    [SerializeField] private Sprite art;
+    public int id { get; private set; }
+    public string cardName { get; private set; }
+    public AudioClip voice1 { get; private set; }
+    public AudioClip voice2 { get; private set; }
+    public string text1 { get; private set; }
+    public string text2 { get; private set; }
+    public Sprite art { get; private set; }
 
-    public int Id => id;
-    public string CardName => cardName;
-    public AudioClip Voice1 => voice1;
-    public AudioClip Voice2 => voice2;
-    public string Text1 => text1;
-    public string Text2 => text2;
-    public Sprite Art => art;
-
-    public void Init(int id, string cardName, AudioClip voice1, AudioClip voice2, string text1, string text2, Sprite art)
+    public Card(int id, string cardName, AudioClip voice1, AudioClip voice2, string text1, string text2, Sprite art)
     {
         this.id = id;
         this.cardName = cardName;
