@@ -10,7 +10,7 @@ public class CSVreader : MonoBehaviour
 {
     public TextAsset[] textAssetData;
 
-    public Deck currDeck = new Deck();
+    // public Deck currDeck = new Deck();
 
     public int csvListIndex = 0;
 

@@ -860,6 +860,8 @@ MonoBehaviour:
   UI: {fileID: 890915501}
   cardPrefab: {fileID: -1612110009869687503, guid: 80ca91cb8df25478089ea38832980d25, type: 3}
   cardParent: {fileID: 1317055995}
+  deckDefinitions:
+  - {fileID: 11400000, guid: 6c2ef03a7bf64415895a3d6dfdf8a3ba, type: 2}
   stahnV1: {fileID: 8300000, guid: bc089b5c2a46f4d808d34968df4c1af3, type: 3}
   stahnV2: {fileID: 8300000, guid: 7d73f146617724254a8e02b3e668b64e, type: 3}
   stahnArt: {fileID: 21300000, guid: 611800c7b587a45ca90071643525ddcf, type: 3}
