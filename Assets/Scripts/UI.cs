@@ -9,6 +9,7 @@ public class UI : MonoBehaviour
     public CanvasGroup MainMenuCG;
     public CanvasGroup SelectModeCG;
     public CanvasGroup GameplayCG;
+    public Text QuoteText;
 
     public void ShowMainMenuCG()
     {
@@ -38,6 +39,11 @@ public class UI : MonoBehaviour
     public void HideGameplayCG()
     {
         CanvasGroupDisplayer.Hide(GameplayCG);
+    }
+
+    public void ShowQuote(string text)
+    {
+        QuoteText.text = text;
     }
     
     // Update is called once per frame

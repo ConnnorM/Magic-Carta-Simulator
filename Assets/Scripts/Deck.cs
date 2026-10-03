@@ -30,4 +30,10 @@ public class Deck
             (cardsList[i], cardsList[randomIndex]) = (cardsList[randomIndex], cardsList[i]);
         }
     }
+
+    // Returns the subset of cards for the board
+    public List<Card> SelectBoard(int cardsOnBoard)
+    {
+        return cardsList.GetRange(0, cardsOnBoard);
+    }
 }
