@@ -11,12 +11,22 @@ public class Game : MonoBehaviour
     // Card parent is the Game Board, or the GameObject where card prefabs live
     [SerializeField] private Transform cardParent;
     [SerializeField] private DeckDefinition[] deckDefinitions;
-    [SerializeField, Range (0.1f, 1.5f)] private float c2cSpacingScalar = 0.8f;
-    [SerializeField] private AudioSource voiceSource;
+    [SerializeField, Range (0.5f, 3.0f)] private float c2cSpacingScalar = 1.75f;
+    [SerializeField, Range(0.5f, 1.0f)] private float xBoundScalar = 0.7f;
+    [SerializeField, Range(0.5f, 1.0f)] private float yBoundScalar = 0.65f;
+    
+    // Audio Stuff
+    [SerializeField] private AudioManager audioManager;
+    
     private List<Vector2> cardPositions;
     private string mode = "Easy";
     private int cardsOnBoard = 25;
     private int round = 0;
+    private Card targetCard = null;
+
+    private CardView targetView = null;
+    // Keeps track of when players can start clicking and when targetCard has been found
+    private bool roundInProgress = false;
     
     // Start is called before the first frame update
     void Start()
@@ -36,6 +46,8 @@ public class Game : MonoBehaviour
         UI.ShowMainMenuCG();
         UI.HideSelectModeCG();
         UI.HideGameplayCG();
+        UI.HideResultCG();
+        UI.HideGameOverCG();
     }
     
     public void OpenSelectMode()
@@ -43,6 +55,8 @@ public class Game : MonoBehaviour
         UI.HideMainMenuCG();
         UI.ShowSelectModeCG();
         UI.HideGameplayCG();
+        UI.HideResultCG();
+        UI.HideGameOverCG();
     }
     
     public void OpenGameplay()
@@ -50,6 +64,13 @@ public class Game : MonoBehaviour
         UI.HideMainMenuCG();
         UI.HideSelectModeCG();
         UI.ShowGameplayCG();
+        UI.HideResultCG();
+        UI.HideGameOverCG();
+
+        roundInProgress = false;
+        
+        // Load and start background music
+        audioManager.PlayRandomMusic();
         
         // Create a deck
         Deck deck = new Deck(DeckLoader.LoadDeck(deckDefinitions[0]));
@@ -59,18 +80,87 @@ public class Game : MonoBehaviour
         List<Card> board = deck.SelectBoard(cardsOnBoard);
         // Generate card positions and spawn cards
         ShowBoard(board);
+        
         // Pick a card, show text1 and play voice1, wait for correct choice, show line 2 and play voice2
-        PlayRound(board);
+        StartCoroutine(StartGame(board));
     }
 
-    private void PlayRound(List<Card> board)
+    private IEnumerator StartGame(List<Card> board)
     {
-        Card target = board[round];
+        // On the first round, do the Ready Go countdown
+        yield return StartCoroutine(ShowReadyGo());
+        
+        // MAIN GAMEPLAY LOOP CONTROL: play rounds until condition is met
+        while (round < 5)
+        {
+            targetCard = board[round];
+            // Waits until a round has finished
+            yield return StartCoroutine(PlayRound());
+            round++;
+        }
+        // Full game is over!
+        UI.ShowGameOverCG();
+        audioManager.PlaySoundEffect(Sfx.YouWin);
+        
+    }
+
+    private IEnumerator PlayRound()
+    {
         // Show the first quote as text on screen
-        UI.ShowQuote(target.text1);
+        UI.ShowQuote(targetCard.text1);
         // Load the first quote and play it
-        voiceSource.clip = target.voice1;
-        voiceSource.Play();
+        audioManager.PlayVoice(targetCard.voice1);
+        // Officially start the round
+        roundInProgress = true;
+        
+        // Don't progress the round until the round has finished (targetCard was selected)
+        yield return new WaitUntil(() => !roundInProgress);
+        
+        // Wait till the Correct card sound effect has stopped
+        yield return null;
+        yield return new WaitWhile(() => audioManager.IsSfxPlaying);
+        
+        // Remove current target from the screen
+        yield return new WaitForSeconds(0.5f);
+        Destroy(targetView.gameObject);
+        
+        // Fade in the full result: card image, text1 + text2, play voice2 and don't move on till voice2 finishes
+        UI.ResultCG.alpha = 0f;
+        UI.ShowResultCG(targetCard);
+        yield return StartCoroutine(UI.FadeInCG(0.2f, UI.ResultCG));
+        
+        audioManager.PlayVoice(targetCard.voice2);
+        // Wait one frame to give time for everything to load
+        yield return null;
+        yield return new WaitWhile(() => audioManager.IsVoicePlaying);
+        
+        // Wait for a bit after voice2 ends before removing everything off the screen
+        yield return new WaitForSeconds(2.5f);
+        
+        // Remove result and quote1
+        UI.HideResultCG();
+        UI.ShowQuote("");
+        yield return new WaitForSeconds(1.5f);
+    }
+
+    private IEnumerator ShowReadyGo()
+    {
+        //Wait a bit
+        yield return new WaitForSeconds(1.0f);
+        
+        // Ready fades in
+        UI.ReadyGoCG.alpha = 0f;
+        UI.ShowReadyGo("READY...");
+        yield return StartCoroutine(UI.FadeInCG(0.3f, UI.ReadyGoCG));
+        
+        // Wait a bit
+        yield return new WaitForSeconds(2.0f);
+        // Go!
+        UI.ShowReadyGo("GO!");
+        // Wait a bit
+        yield return new WaitForSeconds(0.75f);
+        // Erase text
+        UI.ShowReadyGo("");
     }
 
     private void ShowBoard(List<Card> board)
@@ -82,9 +172,29 @@ public class Game : MonoBehaviour
         for (int i = 0; i < board.Count; i++)
         {
             CardView view = Instantiate(cardPrefab, cardParent);
+            // Register Game's OnCardClicked method as a subscriber to CardView view's OnCardClicked event, Clicked
+            view.Clicked += OnCardClicked;
             view.Place(cardPositions[i], Random.Range(0, 360));
             // Call init to set the cards's values and spawn it
             view.Init(board[i]);
+        }
+    }
+
+    private void OnCardClicked(CardView clickedView)
+    {
+        if (!roundInProgress)
+        {
+            return;
+        }
+        if (clickedView.Card == targetCard)
+        {
+            audioManager.PlaySoundEffect(Sfx.SelectCorrectCard);
+            targetView = clickedView;
+            roundInProgress = false;
+        }
+        else
+        {
+            audioManager.PlaySoundEffect(Sfx.SelectIncorrectCard);
         }
     }
 
@@ -105,8 +215,12 @@ public class Game : MonoBehaviour
         float cardHalfHeight = cardArea.rect.height / 2;
         
         // Define the X and Y boundaries for spawn locations
-        float xBound = boardHalfWidth - (Mathf.Sqrt((cardHalfWidth * cardHalfWidth) + (cardHalfHeight * cardHalfHeight)));
-        float yBound = boardHalfHeight - (Mathf.Sqrt((cardHalfWidth * cardHalfWidth) + (cardHalfHeight * cardHalfHeight)));
+        // This way just keeps all the cards inside the screen
+        // float xBound = boardHalfWidth - (Mathf.Sqrt((cardHalfWidth * cardHalfWidth) + (cardHalfHeight * cardHalfHeight)));
+        // float yBound = boardHalfHeight - (Mathf.Sqrt((cardHalfWidth * cardHalfWidth) + (cardHalfHeight * cardHalfHeight)));
+        // This way centers them more. Looks better when using the correct aspect ratio
+        float xBound = boardHalfWidth * xBoundScalar;
+        float yBound = boardHalfHeight * yBoundScalar;
         
         // Generate a random position for each card
         for (int i = 0; i < cardsOnBoard; i++)

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 676e465d67334680a212ff02338e5aae, type: 3}
+  m_Name: SoundEffectsBank
+  m_EditorClassIdentifier: 
+  soundEffectEntries:
+  - id: 0
+    clips:
+    - {fileID: 8300000, guid: aae910599a4d945d4819895c8d461739, type: 3}
+    volume: 1
+  - id: 1
+    clips:
+    - {fileID: 8300000, guid: 551505566e70f4217933265fb7bc5e6f, type: 3}
+    volume: 0.35
+  - id: 2
+    clips:
+    - {fileID: 8300000, guid: 45d7c7940634b4c3ba76864536934dec, type: 3}
+    volume: 0.5
