@@ -25,6 +25,7 @@ This project contains 3 parts:
     - Num of incorrect guesses
     - When wrong, what was the correct guess (common confusions?)
     - How much of the card is covered up by another one? Does this slow down response time? Linearly? Exponentially?
+    - rolling window: more heavily weight recent performance for learning/forgetting/recency bias
 - Data is combined with some noise to generate a person's score given the board and target card
 - Each player's score is compared for each round, the predicted winner has the higher score
 
