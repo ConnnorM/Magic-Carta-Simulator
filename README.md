@@ -32,7 +32,24 @@ This project contains 3 parts:
 - Part 1 is done (for now)
 - Set up Player class
 - Finalize what data to collect
+  - Each player has a set of probabilities for each card
+  - Time to find for each card
+  - Hesitation is randomized
+  - If unknown card, eliminate known cards, randomize over probabilities and unknown cards (distance-based?)
+  - Confusion w/ other cards
+  - Randomize time to move mouse/controller and click in a 'random' spot on the card
+  - keep track of anything the other player has already tried?
 - Determine best data storage method
+- Compare to random selection/other player profiles
+
+## Presentation Details:
+- Rules overview / game demo
+- This is different: it's a memory game, not a strategy game
+  - "best response" is to click the right answer
+  - Real question for the solver is: what does a person do when they don't know the answer?
+- goal is to model real players' profiles
+- Data collection explanation
+- 
 
 ### Extra Ideas:
 - Add game controller functionality
