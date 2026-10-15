@@ -37,6 +37,7 @@ This project contains 3 parts:
   - Time to find for each card
   - Hesitation is randomized
   - If unknown card, eliminate known cards, randomize over probabilities and unknown cards (distance-based?)
+  - did the person click on the same wrong card multiple times?
   - Confusion w/ other cards
   - Randomize time to move mouse/controller and click in a 'random' spot on the card
   - keep track of anything the other player has already tried?
