@@ -47,6 +47,7 @@ This project contains 3 parts:
 - Rules overview / game demo
 - This is different: it's a memory game, not a strategy game
   - "best response" is to click the right answer
+    - show the ai that just instantly gets it right as fast as possible - not very interesting
   - Real question for the solver is: what does a person do when they don't know the answer?
 - goal is to model real players' profiles
 - Data collection explanation
