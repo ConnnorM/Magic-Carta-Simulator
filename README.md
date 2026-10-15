@@ -45,6 +45,7 @@ This project contains 3 parts:
 - Compare to random selection/other player profiles
 
 ## Presentation Details:
+- Make a story board: what did you try and why?
 - Rules overview / game demo
 - This is different: it's a memory game, not a strategy game
   - "best response" is to click the right answer
