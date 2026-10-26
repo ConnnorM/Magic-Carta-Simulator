@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,12 +11,12 @@ public class UI : MonoBehaviour
     public CanvasGroup SelectModeCG;
     public CanvasGroup GameplayCG;
     public CanvasGroup ReadyGoCG;
-    [SerializeField] private Text QuoteText;
-    [SerializeField] private Text ReadyGoText;
+    [SerializeField] private TMP_Text QuoteText;
+    [SerializeField] private TMP_Text ReadyGoText;
     public CanvasGroup ResultCG;
-    [SerializeField] private Text targetNameText;
-    [SerializeField] private Text targetQuote1Text;
-    [SerializeField] private Text targetQuote2Text;
+    [SerializeField] private TMP_Text targetNameText;
+    [SerializeField] private TMP_Text targetQuote1Text;
+    [SerializeField] private TMP_Text targetQuote2Text;
     [SerializeField] private Image targetImage;
     public CanvasGroup GameOverCG;
 

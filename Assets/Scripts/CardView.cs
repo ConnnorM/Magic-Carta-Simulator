@@ -11,6 +11,9 @@ public class CardView : MonoBehaviour, IPointerClickHandler
     // [SerializeField] private Text text2;
     [SerializeField] private Image artImage;
     private RectTransform rt;
+    [SerializeField] private Image shadowImage;
+    [SerializeField] private Vector2 shadowOffset = new Vector2(10, -10);
+    private RectTransform shadowRT;
     private Card card;
     // Create a public getter for this.card
     public Card Card => this.card;
@@ -31,6 +34,8 @@ public class CardView : MonoBehaviour, IPointerClickHandler
     {
         // Create a pointer to the transform so we can change its position
         rt = (RectTransform)transform;
+        // Get a reference to the transform so we can access it quickly
+        shadowRT = (RectTransform)shadowImage.transform;
     }
 
     public void Init(Card card)
@@ -41,12 +46,20 @@ public class CardView : MonoBehaviour, IPointerClickHandler
         // this.text1.text = card.text1;
         // this.text2.text = card.text2;
         this.artImage.sprite = card.art;
+        // Set shadowImage's sprite to just be the card's art so we get the right shape/size
+        this.shadowImage.sprite = card.art;
         this.card = card;
     }
 
     public void Place(Vector2 position, float angle)
     {
+        // Place the actual card
         rt.anchoredPosition = position;
         rt.localRotation = Quaternion.Euler(0, 0, angle);
+        
+        // Place the shadow
+        // We feed in a vector rotated the opposite direction of the card's rotation so that when the parent
+        // applies the actual rotation, they cancel out and we get down/right offset
+        shadowRT.anchoredPosition = Quaternion.Inverse(rt.localRotation) * (Vector3)shadowOffset;
     }
 }
