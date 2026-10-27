@@ -12,7 +12,8 @@ public class UI : MonoBehaviour
     public CanvasGroup GameplayCG;
     public CanvasGroup ReadyGoCG;
     [SerializeField] private TMP_Text QuoteText;
-    [SerializeField] private TMP_Text ReadyGoText;
+    [SerializeField] private Image readyImage;
+    [SerializeField] private Image goImage;
     public CanvasGroup ResultCG;
     [SerializeField] private TMP_Text targetNameText;
     [SerializeField] private TMP_Text targetQuote1Text;
@@ -54,10 +55,24 @@ public class UI : MonoBehaviour
     {
         QuoteText.text = text;
     }
-    
-    public void ShowReadyGo(string text)
+
+    // Enable/disable the ready/go images
+    public void ShowReady()
     {
-        ReadyGoText.text = text;
+        goImage.gameObject.SetActive(false);
+        readyImage.gameObject.SetActive(true);
+        
+    }
+    public void ShowGo()
+    {
+        readyImage.gameObject.SetActive(false);
+        goImage.gameObject.SetActive(true);
+    }
+    
+    public void HideReadyGo()
+    {
+        readyImage.gameObject.SetActive(false);
+        goImage.gameObject.SetActive(false);
     }
 
     public void ShowResultCG(Card targetCard)
@@ -66,6 +81,7 @@ public class UI : MonoBehaviour
         targetQuote1Text.text = targetCard.text1;
         targetQuote2Text.text = targetCard.text2;
         targetImage.sprite = targetCard.art;
+        ResultCG.gameObject.SetActive(true);
         CanvasGroupDisplayer.Show(ResultCG);
     }
 
@@ -75,6 +91,7 @@ public class UI : MonoBehaviour
         targetQuote1Text.text = "";
         targetQuote2Text.text = "";
         CanvasGroupDisplayer.Hide(ResultCG);
+        ResultCG.gameObject.SetActive(false);
     }
 
     // Changes alpha evenly over the course of duration to fade in a Canvas Group

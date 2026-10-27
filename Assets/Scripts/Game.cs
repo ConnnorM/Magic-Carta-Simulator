@@ -150,17 +150,17 @@ public class Game : MonoBehaviour
         
         // Ready fades in
         UI.ReadyGoCG.alpha = 0f;
-        UI.ShowReadyGo("READY...");
+        UI.ShowReady();
         yield return StartCoroutine(UI.FadeInCG(0.3f, UI.ReadyGoCG));
         
         // Wait a bit
         yield return new WaitForSeconds(2.0f);
         // Go!
-        UI.ShowReadyGo("GO!");
+        UI.ShowGo();
         // Wait a bit
         yield return new WaitForSeconds(0.75f);
         // Erase text
-        UI.ShowReadyGo("");
+        UI.HideReadyGo();
     }
 
     private void ShowBoard(List<Card> board)
