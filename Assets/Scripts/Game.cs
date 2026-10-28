@@ -21,6 +21,7 @@ public class Game : MonoBehaviour
     private List<Vector2> cardPositions;
     private string mode = "Easy";
     private int cardsOnBoard = 25;
+    private int totalCardsInRound = 1;
     private int round = 0;
     private Card targetCard = null;
 
@@ -91,7 +92,7 @@ public class Game : MonoBehaviour
         yield return StartCoroutine(ShowReadyGo());
         
         // MAIN GAMEPLAY LOOP CONTROL: play rounds until condition is met
-        while (round < 5)
+        while (round < totalCardsInRound)
         {
             targetCard = board[round];
             // Waits until a round has finished

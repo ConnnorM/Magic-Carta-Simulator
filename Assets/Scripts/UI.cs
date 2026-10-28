@@ -111,12 +111,15 @@ public class UI : MonoBehaviour
 
     public void ShowGameOverCG()
     {
+        GameOverCG.gameObject.SetActive(true);
+        
         CanvasGroupDisplayer.Show(GameOverCG);
     }
 
     public void HideGameOverCG()
     {
         CanvasGroupDisplayer.Hide(GameOverCG);
+        GameOverCG.gameObject.SetActive(false);
     }
     
     // Update is called once per frame
