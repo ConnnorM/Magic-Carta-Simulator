@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Random = UnityEngine.Random;
 
 public class Game : MonoBehaviour
@@ -21,13 +22,20 @@ public class Game : MonoBehaviour
     private List<Vector2> cardPositions;
     private string mode = "Easy";
     private int cardsOnBoard = 25;
-    private int totalCardsInRound = 1;
+    private int totalCardsInRound = 5;
     private int round = 0;
     private Card targetCard = null;
 
     private CardView targetView = null;
     // Keeps track of when players can start clicking and when targetCard has been found
     private bool roundInProgress = false;
+    
+    // Create containers for the X mark to appear if a wrong answer is made
+    // Need container to determine draw order, use coordinate space easily, and all X's can be removed at once
+    [SerializeField] private RectTransform xMarkParent;
+    // Prefabs are templates. We could in theory have multiple X's on screen at once, so we can't just
+    // make one object like we can with other things
+    [SerializeField] private RectTransform xMarkPrefab;
     
     // Start is called before the first frame update
     void Start()
@@ -124,6 +132,8 @@ public class Game : MonoBehaviour
         // Remove current target from the screen
         yield return new WaitForSeconds(0.5f);
         Destroy(targetView.gameObject);
+        // Remove any X markers left on the screen immediately
+        foreach (Transform xMarker in xMarkParent) Destroy(xMarker.gameObject);
         
         // Fade in the full result: card image, text1 + text2, play voice2 and don't move on till voice2 finishes
         UI.ResultCG.alpha = 0f;
@@ -181,21 +191,40 @@ public class Game : MonoBehaviour
         }
     }
 
-    private void OnCardClicked(CardView clickedView)
+    private void OnCardClicked(CardView clickedView, PointerEventData eventData)
     {
+        // A round is not in progress, so ignore card clicks
         if (!roundInProgress)
         {
             return;
         }
+        // Pointer selected the correct card
         if (clickedView.Card == targetCard)
         {
             audioManager.PlaySoundEffect(Sfx.SelectCorrectCard);
             targetView = clickedView;
             roundInProgress = false;
         }
+        // Pointer selected the incorrect card
         else
         {
+            // Incorrect sound effect
             audioManager.PlaySoundEffect(Sfx.SelectIncorrectCard);
+            
+            // Place the X marker now
+            // Convert the pointer location to Canvas units (what the X marker uses)
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(xMarkParent, eventData.position,
+                    eventData.pressEventCamera, out Vector2 localPoint))
+            {
+                // Instantiate the X Marker prefab
+                RectTransform xMark = Instantiate(xMarkPrefab, xMarkParent);
+                // Local point is what the conversion above returns
+                xMark.anchoredPosition = localPoint;
+                
+                // Remove the X Mark after 3 seconds if it's not already gone
+                Destroy(xMark.gameObject, 3f);
+            }
+            
         }
     }
 
