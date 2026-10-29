@@ -1853,6 +1853,8 @@ MonoBehaviour:
   audioManager: {fileID: 1596748184}
   xMarkParent: {fileID: 483356901}
   xMarkPrefab: {fileID: 1261765271677980014, guid: a67a757a59aed4966b948327fdb9ba68, type: 3}
+  hoverOverlayPrefab: {fileID: 2604841677692977663, guid: 1774f11acbdf04c4a98057437554d015, type: 3}
+  hoverOverlayParent: {fileID: 1576132292}
 --- !u!4 &809169126
 Transform:
   m_ObjectHideFlags: 0

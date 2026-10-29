@@ -37,6 +37,13 @@ public class Game : MonoBehaviour
     // make one object like we can with other things
     [SerializeField] private RectTransform xMarkPrefab;
     
+    // Hover stuff
+    [SerializeField] private HoverOverlay hoverOverlayPrefab;
+    [SerializeField] private RectTransform hoverOverlayParent;
+    private List<HoverOverlay> playerOverlays = new List<HoverOverlay>();
+    private bool hoverEnabled = false;
+    
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -77,6 +84,8 @@ public class Game : MonoBehaviour
         UI.HideGameOverCG();
 
         roundInProgress = false;
+        hoverEnabled = false;
+        foreach (HoverOverlay playerOverlay in playerOverlays) playerOverlay.Hide();
         
         // Load and start background music
         audioManager.PlayRandomMusic();
@@ -89,6 +98,12 @@ public class Game : MonoBehaviour
         List<Card> board = deck.SelectBoard(cardsOnBoard);
         // Generate card positions and spawn cards
         ShowBoard(board);
+        
+        // Add a hover overlay to our list per player
+        if (playerOverlays.Count == 0)
+        {
+            playerOverlays.Add(Instantiate(hoverOverlayPrefab, hoverOverlayParent));
+        }
         
         // Pick a card, show text1 and play voice1, wait for correct choice, show line 2 and play voice2
         StartCoroutine(StartGame(board));
@@ -121,6 +136,7 @@ public class Game : MonoBehaviour
         audioManager.PlayVoice(targetCard.voice1);
         // Officially start the round
         roundInProgress = true;
+        hoverEnabled = true;
         
         // Don't progress the round until the round has finished (targetCard was selected)
         yield return new WaitUntil(() => !roundInProgress);
@@ -188,6 +204,11 @@ public class Game : MonoBehaviour
             view.Place(cardPositions[i], Random.Range(0, 360));
             // Call init to set the cards's values and spawn it
             view.Init(board[i]);
+            
+            // OnCardHoverEntered/Exited subscribe to CardView view's HoverEntered/HoverExited events
+            view.HoverEntered += OnCardHoverEntered;
+            view.HoverExited += OnCardHoverExited;
+            
         }
     }
 
@@ -203,6 +224,7 @@ public class Game : MonoBehaviour
         {
             audioManager.PlaySoundEffect(Sfx.SelectCorrectCard);
             targetView = clickedView;
+            foreach (HoverOverlay playerOverlay in playerOverlays) playerOverlay.Hide();
             roundInProgress = false;
         }
         // Pointer selected the incorrect card
@@ -226,6 +248,22 @@ public class Game : MonoBehaviour
             }
             
         }
+    }
+
+    private void OnCardHoverEntered(CardView view)
+    {
+        if (!hoverEnabled)
+        {
+            return;
+        }
+        // If hover is allowed, enable the hoverOverlay on the hovered CardView
+        playerOverlays[0].Show(view);
+    }
+    
+    private void OnCardHoverExited(CardView view)
+    {
+        // If hover is allowed, enable the hoverOverlay on the hovered CardView
+        playerOverlays[0].Hide();
     }
 
     private List<Vector2> GenerateAllCardPositions()

@@ -27,6 +27,7 @@ public class HoverOverlay : MonoBehaviour
         rt.position = cardRT.position;
         rt.rotation = cardRT.rotation;
         rt.sizeDelta = cardRT.rect.size;
+        rt.localScale = cardRT.localScale;
         // Get the same image
         ghostImage.sprite = view.Card.art;
         // Turn on the instantiated prefab of the hover effect
