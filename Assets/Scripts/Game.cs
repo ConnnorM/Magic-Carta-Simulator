@@ -43,6 +43,12 @@ public class Game : MonoBehaviour
     private List<HoverOverlay> playerOverlays = new List<HoverOverlay>();
     private bool hoverEnabled = false;
     
+    // Cursor Stuff
+    [SerializeField] private PlayerCursor cursorPrefab;
+    [SerializeField] private RectTransform cursorParent;
+    private List<Player> players = new List<Player>();
+    private List<PlayerCursor> cursors = new List<PlayerCursor>();
+    
     
     // Start is called before the first frame update
     void Start()
@@ -54,11 +60,16 @@ public class Game : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        // If a cursors exists, move it to the mouse position each frame
+        if (cursors.Count > 0)
+        {
+            cursors[0].MoveToScreenPoint(Input.mousePosition);
+        }
     }
 
     public void OpenMainMenu()
     {
+        Cursor.visible = true;
         UI.ShowMainMenuCG();
         UI.HideSelectModeCG();
         UI.HideGameplayCG();
@@ -68,6 +79,7 @@ public class Game : MonoBehaviour
     
     public void OpenSelectMode()
     {
+        Cursor.visible = true;
         UI.HideMainMenuCG();
         UI.ShowSelectModeCG();
         UI.HideGameplayCG();
@@ -77,15 +89,32 @@ public class Game : MonoBehaviour
     
     public void OpenGameplay()
     {
+        // Hide the operating system's mouse icon so only the hand represents the cursor
+        Cursor.visible = false;
         UI.HideMainMenuCG();
         UI.HideSelectModeCG();
         UI.ShowGameplayCG();
         UI.HideResultCG();
         UI.HideGameOverCG();
 
+        // Set up the round
         roundInProgress = false;
         hoverEnabled = false;
         foreach (HoverOverlay playerOverlay in playerOverlays) playerOverlay.Hide();
+        
+        // Set up players
+        if (players.Count == 0)
+        {
+            // Make a new player and add to the list of players
+            Player p1 = new Player(1, "Test");
+            players.Add(p1);
+            // Instantiate a new cursor
+            PlayerCursor cursor = Instantiate(cursorPrefab, cursorParent);
+            // Give the cursor its player
+            cursor.Init(p1, cursorParent);
+            // Add the cursor to the list of cursors
+            cursors.Add(cursor);
+        }
         
         // Load and start background music
         audioManager.PlayRandomMusic();
