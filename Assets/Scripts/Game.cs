@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
 
 public class Game : MonoBehaviour
@@ -48,6 +49,10 @@ public class Game : MonoBehaviour
     [SerializeField] private RectTransform cursorParent;
     private List<Player> players = new List<Player>();
     private List<PlayerCursor> cursors = new List<PlayerCursor>();
+    private List<CardView> hoveredViews = new List<CardView>();
+    
+    // Camera stuff
+    private Camera uiCamera;
     
     
     // Start is called before the first frame update
@@ -60,10 +65,18 @@ public class Game : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // If a cursors exists, move it to the mouse position each frame
-        if (cursors.Count > 0)
+        // If a cursor exists and we have a mouse, AND the mouse moved in the last frame, move the cursor
+        if (cursors.Count > 0 && Mouse.current != null && Mouse.current.delta.ReadValue().sqrMagnitude > 0f)
         {
-            cursors[0].MoveToScreenPoint(Input.mousePosition);
+            cursors[0].MoveToScreenPoint(Mouse.current.position.ReadValue());
+        }
+        
+        for (int i = 0; i < cursors.Count; i++)
+        {
+            CardView under = CardHitTester.GetCardAt(cursors[i].ScreenPosition);
+            if (under != hoveredViews[i]) SetHover(i, under);
+            if (cursors[i].SelectPressedThisFrame && under != null)
+                HandleCardSelected(players[i], under, cursors[i].ScreenPosition);
         }
     }
 
@@ -108,10 +121,15 @@ public class Game : MonoBehaviour
             // Make a new player and add to the list of players
             Player p1 = new Player(1, "Test");
             players.Add(p1);
+            // Add a null entry in HoveredViews since the player isn't hovering anything
+            hoveredViews.Add(null);
+            // Add a hover overlay to our list per player
+            playerOverlays.Add(Instantiate(hoverOverlayPrefab, hoverOverlayParent));
+            
             // Instantiate a new cursor
             PlayerCursor cursor = Instantiate(cursorPrefab, cursorParent);
             // Give the cursor its player
-            cursor.Init(p1, cursorParent);
+            cursor.Init(p1, cursorParent, new KeyboardInput(Keyboard.current));
             // Add the cursor to the list of cursors
             cursors.Add(cursor);
         }
@@ -128,11 +146,9 @@ public class Game : MonoBehaviour
         // Generate card positions and spawn cards
         ShowBoard(board);
         
-        // Add a hover overlay to our list per player
-        if (playerOverlays.Count == 0)
-        {
-            playerOverlays.Add(Instantiate(hoverOverlayPrefab, hoverOverlayParent));
-        }
+        // Create the canvas and set up the camera
+        Canvas canvas = xMarkParent.GetComponentInParent<Canvas>();
+        uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
         
         // Pick a card, show text1 and play voice1, wait for correct choice, show line 2 and play voice2
         StartCoroutine(StartGame(board));
@@ -152,7 +168,9 @@ public class Game : MonoBehaviour
             round++;
         }
         // Full game is over!
+        UI.GameOverCG.alpha = 0f;
         UI.ShowGameOverCG();
+        yield return StartCoroutine(UI.FadeCG(0.2f, UI.GameOverCG, 0, 1));
         audioManager.PlaySoundEffect(Sfx.YouWin);
         
     }
@@ -166,7 +184,14 @@ public class Game : MonoBehaviour
         // Officially start the round
         roundInProgress = true;
         hoverEnabled = true;
-        
+        for (int i = 0; i < playerOverlays.Count; i++)
+        {
+            if (hoveredViews[i] != null)
+            {
+                playerOverlays[i].Show(hoveredViews[i]);
+            }
+        }
+
         // Don't progress the round until the round has finished (targetCard was selected)
         yield return new WaitUntil(() => !roundInProgress);
         
@@ -177,13 +202,21 @@ public class Game : MonoBehaviour
         // Remove current target from the screen
         yield return new WaitForSeconds(0.5f);
         Destroy(targetView.gameObject);
+        for (int i = 0; i < hoveredViews.Count; i++)
+        {
+            hoveredViews[i] = null;
+        }
         // Remove any X markers left on the screen immediately
         foreach (Transform xMarker in xMarkParent) Destroy(xMarker.gameObject);
         
         // Fade in the full result: card image, text1 + text2, play voice2 and don't move on till voice2 finishes
         UI.ResultCG.alpha = 0f;
         UI.ShowResultCG(targetCard);
-        yield return StartCoroutine(UI.FadeInCG(0.2f, UI.ResultCG));
+        // Start the cursor fade-out first and disable them
+        SetFrozenCursors(true);
+        StartCoroutine(FadeCursors(1, 0, 0.2f));
+        yield return StartCoroutine(UI.FadeCG(0.2f, UI.ResultCG, 0, 1));
+        
         
         audioManager.PlayVoice(targetCard.voice2);
         // Wait one frame to give time for everything to load
@@ -193,10 +226,19 @@ public class Game : MonoBehaviour
         // Wait for a bit after voice2 ends before removing everything off the screen
         yield return new WaitForSeconds(2.5f);
         
-        // Remove result and quote1
-        UI.HideResultCG();
+        // Remove quote1
         UI.ShowQuote("");
-        yield return new WaitForSeconds(1.5f);
+        // Fade the result CG back out
+        Coroutine resultFade = StartCoroutine(UI.FadeCG(0.2f, UI.ResultCG, 1, 0));
+        // Fade cursors back in and reenable them
+        Coroutine cursorFade = StartCoroutine(FadeCursors(0, 1, 0.2f));
+        // Wait until the resultFade is over to hide the result CG
+        yield return resultFade;
+        UI.HideResultCG();
+        // If cursorFade isn't done, wait for that to be done too
+        yield return cursorFade;
+        SetFrozenCursors(false);
+        yield return new WaitForSeconds(1.2f);
     }
 
     private IEnumerator ShowReadyGo()
@@ -207,7 +249,7 @@ public class Game : MonoBehaviour
         // Ready fades in
         UI.ReadyGoCG.alpha = 0f;
         UI.ShowReady();
-        yield return StartCoroutine(UI.FadeInCG(0.3f, UI.ReadyGoCG));
+        yield return StartCoroutine(UI.FadeCG(0.3f, UI.ReadyGoCG, 0, 1));
         
         // Wait a bit
         yield return new WaitForSeconds(2.0f);
@@ -229,19 +271,16 @@ public class Game : MonoBehaviour
         {
             CardView view = Instantiate(cardPrefab, cardParent);
             // Register Game's OnCardClicked method as a subscriber to CardView view's OnCardClicked event, Clicked
-            view.Clicked += OnCardClicked;
+            view.Clicked += HandleCardClicked;
             view.Place(cardPositions[i], Random.Range(0, 360));
             // Call init to set the cards's values and spawn it
             view.Init(board[i]);
             
-            // OnCardHoverEntered/Exited subscribe to CardView view's HoverEntered/HoverExited events
-            view.HoverEntered += OnCardHoverEntered;
-            view.HoverExited += OnCardHoverExited;
-            
         }
     }
 
-    private void OnCardClicked(CardView clickedView, PointerEventData eventData)
+    // OnCardClicked, but for all input devices
+    private void HandleCardSelected(Player player, CardView view, Vector2 screenPoint)
     {
         // A round is not in progress, so ignore card clicks
         if (!roundInProgress)
@@ -249,12 +288,13 @@ public class Game : MonoBehaviour
             return;
         }
         // Pointer selected the correct card
-        if (clickedView.Card == targetCard)
+        if (view.Card == targetCard)
         {
             audioManager.PlaySoundEffect(Sfx.SelectCorrectCard);
-            targetView = clickedView;
+            targetView = view;
             foreach (HoverOverlay playerOverlay in playerOverlays) playerOverlay.Hide();
             roundInProgress = false;
+            hoverEnabled = false;
         }
         // Pointer selected the incorrect card
         else
@@ -264,8 +304,8 @@ public class Game : MonoBehaviour
             
             // Place the X marker now
             // Convert the pointer location to Canvas units (what the X marker uses)
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(xMarkParent, eventData.position,
-                    eventData.pressEventCamera, out Vector2 localPoint))
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(xMarkParent, screenPoint,
+                    uiCamera, out Vector2 localPoint))
             {
                 // Instantiate the X Marker prefab
                 RectTransform xMark = Instantiate(xMarkPrefab, xMarkParent);
@@ -278,21 +318,11 @@ public class Game : MonoBehaviour
             
         }
     }
-
-    private void OnCardHoverEntered(CardView view)
-    {
-        if (!hoverEnabled)
-        {
-            return;
-        }
-        // If hover is allowed, enable the hoverOverlay on the hovered CardView
-        playerOverlays[0].Show(view);
-    }
     
-    private void OnCardHoverExited(CardView view)
+    // HandleCardSelected but for mouse clicks
+    private void HandleCardClicked(CardView clickedView, PointerEventData eventData)
     {
-        // If hover is allowed, enable the hoverOverlay on the hovered CardView
-        playerOverlays[0].Hide();
+        HandleCardSelected(players[0], clickedView, eventData.position);
     }
 
     private List<Vector2> GenerateAllCardPositions()
@@ -364,6 +394,37 @@ public class Game : MonoBehaviour
             }
         }
         return true;
+    }
+
+    private void SetHover(int playerIndex, CardView view)
+    {
+        hoveredViews[playerIndex] = view;
+        if (!hoverEnabled || view == null)
+        {
+            playerOverlays[playerIndex].Hide();
+            return;
+        }
+        playerOverlays[playerIndex].Show(view);
+    }
+
+    // Freezes/unfreezes all cursors
+    private void SetFrozenCursors(bool input)
+    {
+        foreach (PlayerCursor curCursor in cursors)
+        {
+            curCursor.SetFrozen(input);
+        }
+    }
+
+    // Coroutine for fading all the cursors out
+    private IEnumerator FadeCursors(float from, float to, float duration)
+    {
+        foreach (PlayerCursor curCursor in cursors)
+        {
+            StartCoroutine(UI.FadeCG(duration, curCursor.CG, from, to));
+        }
+
+        yield return new WaitForSeconds(duration);
     }
     
 }

@@ -95,18 +95,18 @@ public class UI : MonoBehaviour
     }
 
     // Changes alpha evenly over the course of duration to fade in a Canvas Group
-    public IEnumerator FadeInCG(float duration, CanvasGroup cg)
+    public IEnumerator FadeCG(float duration, CanvasGroup cg, float from, float to)
     {
         // Create a timer from 0 to duration
         float curTime = 0f;
         while (curTime < duration)
         {
             curTime += Time.deltaTime;
-            cg.alpha = Mathf.Clamp01(curTime / duration);
+            cg.alpha = Mathf.Lerp(from, to, curTime / duration);
             yield return null;
         }
 
-        cg.alpha = 1f;
+        cg.alpha = to;
     }
 
     public void ShowGameOverCG()
