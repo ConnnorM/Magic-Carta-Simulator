@@ -23,6 +23,7 @@ public class UI : MonoBehaviour
     [SerializeField] private TMP_Text streakPointsText;
     [SerializeField] private TMP_Text nextPointsText;
     public CanvasGroup GameOverCG;
+    public CanvasGroup NextPointsCG;
 
     public void ShowMainMenuCG()
     {
@@ -93,7 +94,6 @@ public class UI : MonoBehaviour
         {
             streakPointsText.text = "";
         }
-        nextPointsText.text = "Next: +" + basePoints;
         ResultCG.gameObject.SetActive(true);
         CanvasGroupDisplayer.Show(ResultCG);
     }
@@ -105,6 +105,19 @@ public class UI : MonoBehaviour
         targetQuote2Text.text = "";
         CanvasGroupDisplayer.Hide(ResultCG);
         ResultCG.gameObject.SetActive(false);
+    }
+
+    public void ShowNextPointsCG(int round)
+    {
+        nextPointsText.text = "Next: +" + ScoreManager.GetBasePoints(round);
+        NextPointsCG.gameObject.SetActive(true);
+        CanvasGroupDisplayer.Show(NextPointsCG);
+    }
+
+    public void HideNextPointsCG()
+    {
+        CanvasGroupDisplayer.Hide(NextPointsCG);
+        NextPointsCG.gameObject.SetActive(false);
     }
 
     // Changes alpha evenly over the course of duration to fade in a Canvas Group

@@ -23,7 +23,7 @@ public class Game : MonoBehaviour
     private List<Vector2> cardPositions;
     private string mode = "Easy";
     private int cardsOnBoard = 25;
-    private int totalCardsInRound = 5;
+    private int totalCardsInRound = 1;
     private int round = 0;
     private Card targetCard = null;
 
@@ -213,11 +213,17 @@ public class Game : MonoBehaviour
         UI.ShowGameOverCG();
         yield return StartCoroutine(UI.FadeCG(0.2f, UI.GameOverCG, 0, 1));
         audioManager.PlaySoundEffect(Sfx.YouWin);
+        yield return new WaitWhile(() => audioManager.IsSfxPlaying);
+        yield return new WaitForSeconds(1.0f);
+        yield return StartCoroutine(UI.FadeCG(0.2f, UI.GameOverCG, 1, 0));
+        UI.HideGameOverCG();
         
     }
 
     private IEnumerator PlayRound()
     {
+        // Show the points for this round
+        UI.ShowNextPointsCG(round + 1);
         // Show the first quote as text on screen
         UI.ShowQuote(targetCard.text1);
         // Load the first quote and play it
@@ -264,9 +270,6 @@ public class Game : MonoBehaviour
         yield return null;
         yield return new WaitWhile(() => audioManager.IsVoicePlaying);
         
-        // Update score in bubbles
-        RefreshPlayerBubbles();
-        
         // Wait for a bit after voice2 ends before removing everything off the screen
         yield return new WaitForSeconds(2.5f);
         
@@ -276,6 +279,7 @@ public class Game : MonoBehaviour
         Coroutine resultFade = StartCoroutine(UI.FadeCG(0.2f, UI.ResultCG, 1, 0));
         // Fade cursors back in and reenable them
         Coroutine cursorFade = StartCoroutine(FadeCursors(0, 1, 0.2f));
+        StartCoroutine(UI.FadeCG(0.2f, UI.NextPointsCG, 1, 0));
         // Wait until the resultFade is over to hide the result CG
         yield return resultFade;
         UI.HideResultCG();
@@ -355,10 +359,11 @@ public class Game : MonoBehaviour
                     p.ResetStreak();
                 }
             }
-            // Update points internally (but don't display change right away)
             // Add 1 here since round starts at 0. Everything in ScoreManager assumes correct round number
             int points = ScoreManager.GetTotalPoints(round + 1, winner.streak);
             winner.AddPoints(points);
+            // Update points on the bubble and streak right away
+            RefreshPlayerBubbles();
 
         }
         // Pointer selected the incorrect card
