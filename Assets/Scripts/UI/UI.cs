@@ -19,6 +19,9 @@ public class UI : MonoBehaviour
     [SerializeField] private TMP_Text targetQuote1Text;
     [SerializeField] private TMP_Text targetQuote2Text;
     [SerializeField] private Image targetImage;
+    [SerializeField] private TMP_Text basePointsText;
+    [SerializeField] private TMP_Text streakPointsText;
+    [SerializeField] private TMP_Text nextPointsText;
     public CanvasGroup GameOverCG;
 
     public void ShowMainMenuCG()
@@ -75,12 +78,22 @@ public class UI : MonoBehaviour
         goImage.gameObject.SetActive(false);
     }
 
-    public void ShowResultCG(Card targetCard)
+    public void ShowResultCG(Card targetCard, int basePoints, int bonusPoints)
     {
         targetNameText.text = targetCard.cardName;
         targetQuote1Text.text = targetCard.text1;
         targetQuote2Text.text = targetCard.text2;
         targetImage.sprite = targetCard.art;
+        basePointsText.text = basePoints + " pts";
+        if (bonusPoints > 0)
+        {
+            streakPointsText.text = "+" + bonusPoints + " pts";
+        }
+        else
+        {
+            streakPointsText.text = "";
+        }
+        nextPointsText.text = "Next: +" + basePoints;
         ResultCG.gameObject.SetActive(true);
         CanvasGroupDisplayer.Show(ResultCG);
     }

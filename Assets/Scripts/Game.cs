@@ -50,9 +50,23 @@ public class Game : MonoBehaviour
     private List<Player> players = new List<Player>();
     private List<PlayerCursor> cursors = new List<PlayerCursor>();
     private List<CardView> hoveredViews = new List<CardView>();
+    [SerializeField] private float penaltySeconds = 3f;
+    [SerializeField] private List<PlayerBubble> playerBubbles = new List<PlayerBubble>();
+
+    [SerializeField] private Vector2[] cursorStartPositions =
+    {
+        new Vector2(-150f, 50f),
+        new Vector2(150f, 50f),
+        new Vector2(-150f, -50f),
+        new Vector2(150f, -50f),
+
+    };
     
     // Camera stuff
     private Camera uiCamera;
+    
+    // Points/winning stuff
+    private Player winner = null;
     
     
     // Start is called before the first frame update
@@ -73,6 +87,9 @@ public class Game : MonoBehaviour
         
         for (int i = 0; i < cursors.Count; i++)
         {
+            // Do not update the hoveredView if the cursor is currently penalized
+            if (cursors[i].IsPenalized) continue;
+            
             CardView under = CardHitTester.GetCardAt(cursors[i].ScreenPosition);
             if (under != hoveredViews[i]) SetHover(i, under);
             if (cursors[i].SelectPressedThisFrame && under != null)
@@ -119,8 +136,22 @@ public class Game : MonoBehaviour
         if (players.Count == 0)
         {
             // Make a new player and add to the list of players
-            Player p1 = new Player(1, "Test");
+            Player p1 = new Player(1, "Pascal");
             players.Add(p1);
+            // Set up the player bubble
+            if (playerBubbles.Count > 0)
+            {
+                // Connect the player to a bubble
+                playerBubbles[0].Bind(p1);
+            }
+
+            // Make sure each player starts a new game at default values
+            foreach (Player p in players)
+            {
+                p.ResetForNewGame();
+            }
+            RefreshPlayerBubbles();
+            
             // Add a null entry in HoveredViews since the player isn't hovering anything
             hoveredViews.Add(null);
             // Add a hover overlay to our list per player
@@ -133,6 +164,16 @@ public class Game : MonoBehaviour
             // Add the cursor to the list of cursors
             cursors.Add(cursor);
         }
+        
+        // Reset all the cursors to starting position
+        for (int i = 0; i < cursors.Count; i++)
+        {
+            // Make the cursors invisible, they fade in when GO! Fades out
+            cursors[i].CG.alpha = 0f;
+            cursors[i].GoToStartPosition(GetStartPosition(i));
+        }
+        // Don't allow cursors to move until they've appeared
+        SetFrozenCursors(true);
         
         // Load and start background music
         audioManager.PlayRandomMusic();
@@ -211,7 +252,7 @@ public class Game : MonoBehaviour
         
         // Fade in the full result: card image, text1 + text2, play voice2 and don't move on till voice2 finishes
         UI.ResultCG.alpha = 0f;
-        UI.ShowResultCG(targetCard);
+        UI.ShowResultCG(targetCard, ScoreManager.GetBasePoints(round + 1), ScoreManager.GetStreakPoints(round + 1, winner.streak));
         // Start the cursor fade-out first and disable them
         SetFrozenCursors(true);
         StartCoroutine(FadeCursors(1, 0, 0.2f));
@@ -222,6 +263,9 @@ public class Game : MonoBehaviour
         // Wait one frame to give time for everything to load
         yield return null;
         yield return new WaitWhile(() => audioManager.IsVoicePlaying);
+        
+        // Update score in bubbles
+        RefreshPlayerBubbles();
         
         // Wait for a bit after voice2 ends before removing everything off the screen
         yield return new WaitForSeconds(2.5f);
@@ -257,8 +301,13 @@ public class Game : MonoBehaviour
         UI.ShowGo();
         // Wait a bit
         yield return new WaitForSeconds(0.75f);
-        // Erase text
+        // Fade out text and fade in cursors
+        Coroutine fadeGO = StartCoroutine(UI.FadeCG(0.3f, UI.ReadyGoCG, 1, 0));
+        Coroutine fadeCurorsIn = StartCoroutine(FadeCursors(0, 1, 0.3f));
+        yield return fadeGO;
         UI.HideReadyGo();
+        yield return fadeCurorsIn;
+        SetFrozenCursors(false);
     }
 
     private void ShowBoard(List<Card> board)
@@ -295,6 +344,22 @@ public class Game : MonoBehaviour
             foreach (HoverOverlay playerOverlay in playerOverlays) playerOverlay.Hide();
             roundInProgress = false;
             hoverEnabled = false;
+            // Set the round winner and handle scoring
+            winner = player;
+            // reset other's streaks
+            winner.IncreaseStreak();
+            foreach (Player p in players)
+            {
+                if (p != player)
+                {
+                    p.ResetStreak();
+                }
+            }
+            // Update points internally (but don't display change right away)
+            // Add 1 here since round starts at 0. Everything in ScoreManager assumes correct round number
+            int points = ScoreManager.GetTotalPoints(round + 1, winner.streak);
+            winner.AddPoints(points);
+
         }
         // Pointer selected the incorrect card
         else
@@ -313,9 +378,10 @@ public class Game : MonoBehaviour
                 xMark.anchoredPosition = localPoint;
                 
                 // Remove the X Mark after 3 seconds if it's not already gone
-                Destroy(xMark.gameObject, 3f);
+                Destroy(xMark.gameObject, penaltySeconds);
             }
-            
+            // Freeze the cursor for some time and animate the jiggle
+            cursors[players.IndexOf(player)].StartPenalty(penaltySeconds);
         }
     }
     
@@ -425,6 +491,21 @@ public class Game : MonoBehaviour
         }
 
         yield return new WaitForSeconds(duration);
+    }
+
+    // Gives each player their own unique starting position
+    private Vector2 GetStartPosition(int playerIndex)
+    {
+        if (cursorStartPositions == null || cursorStartPositions.Length == 0)
+        {
+            return Vector2.zero;
+        }
+        return cursorStartPositions[playerIndex];
+    }
+
+    private void RefreshPlayerBubbles()
+    {
+        foreach (PlayerBubble bubble in playerBubbles) bubble.Refresh();
     }
     
 }

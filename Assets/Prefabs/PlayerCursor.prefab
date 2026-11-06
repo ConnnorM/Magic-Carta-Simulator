@@ -131,6 +131,9 @@ MonoBehaviour:
   handImage: {fileID: 1018483283544259467}
   playerNumText: {fileID: 4654991285137936842}
   cg: {fileID: 5653034641082758933}
+  speed: 800
+  jiggleDistance: 16
+  jiggleFPS: 18
 --- !u!225 &5653034641082758933
 CanvasGroup:
   m_ObjectHideFlags: 0
