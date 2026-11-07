@@ -24,6 +24,8 @@ public class UI : MonoBehaviour
     [SerializeField] private TMP_Text nextPointsText;
     public CanvasGroup GameOverCG;
     public CanvasGroup NextPointsCG;
+    public CanvasGroup QuitMenuCG;
+    public CanvasGroup BlackoutCG;
 
     public void ShowMainMenuCG()
     {
@@ -146,6 +148,18 @@ public class UI : MonoBehaviour
     {
         CanvasGroupDisplayer.Hide(GameOverCG);
         GameOverCG.gameObject.SetActive(false);
+    }
+
+    public void ShowQuitMenuCG()
+    {
+        QuitMenuCG.gameObject.SetActive(true);
+        CanvasGroupDisplayer.Show(QuitMenuCG); 
+    }
+
+    public void HideQuitMenuCG()
+    {
+        QuitMenuCG.gameObject.SetActive(false);
+        CanvasGroupDisplayer.Hide(QuitMenuCG); 
     }
     
     // Update is called once per frame

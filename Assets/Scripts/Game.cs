@@ -68,10 +68,19 @@ public class Game : MonoBehaviour
     // Points/winning stuff
     private Player winner = null;
     
+    // Quit menu stuff
+    [SerializeField] private MenuOption yesOption;
+    [SerializeField] private MenuOption noOption;
+    private bool menuOpen = false;
+    private bool isRestarting = false;
+    
     
     // Start is called before the first frame update
     void Start()
     {
+        // Subscribe to quit menu events
+        yesOption.Chosen += OnQuitYes;
+        noOption.Chosen += OnQuitNo;
         // OpenMainMenu();
         OpenGameplay();
     }
@@ -84,13 +93,20 @@ public class Game : MonoBehaviour
         {
             cursors[0].MoveToScreenPoint(Mouse.current.position.ReadValue());
         }
+
+        // If the menu is open, don't look at cards. Just handle the menu
+        if (menuOpen)
+        {
+            UpdateMenu();
+            return;
+        }
         
         for (int i = 0; i < cursors.Count; i++)
         {
             // Do not update the hoveredView if the cursor is currently penalized
             if (cursors[i].IsPenalized) continue;
             
-            CardView under = CardHitTester.GetCardAt(cursors[i].ScreenPosition);
+            CardView under = UIHitTester.GetAt<CardView>(cursors[i].ScreenPosition);
             if (under != hoveredViews[i]) SetHover(i, under);
             if (cursors[i].SelectPressedThisFrame && under != null)
                 HandleCardSelected(players[i], under, cursors[i].ScreenPosition);
@@ -126,6 +142,8 @@ public class Game : MonoBehaviour
         UI.ShowGameplayCG();
         UI.HideResultCG();
         UI.HideGameOverCG();
+        menuOpen = false;
+        UI.HideQuitMenuCG();
 
         // Set up the round
         roundInProgress = false;
@@ -218,6 +236,15 @@ public class Game : MonoBehaviour
         yield return StartCoroutine(UI.FadeCG(0.2f, UI.GameOverCG, 1, 0));
         UI.HideGameOverCG();
         
+        // Show the quit menu
+        UI.QuitMenuCG.alpha = 0f;
+        UI.ShowQuitMenuCG();
+        yield return StartCoroutine(UI.FadeCG(0.2f, UI.QuitMenuCG, 0, 1));
+        yield return new WaitForSeconds(0.5f);
+        menuOpen = true;
+        hoverEnabled = false;
+
+
     }
 
     private IEnumerator PlayRound()
@@ -511,6 +538,87 @@ public class Game : MonoBehaviour
     private void RefreshPlayerBubbles()
     {
         foreach (PlayerBubble bubble in playerBubbles) bubble.Refresh();
+    }
+
+    public void UpdateMenu()
+    {
+        // Update menu is called each frame in update. By default yes/noHovers are false if someone unHovers
+        bool yesHover = false;
+        bool noHover = false;
+
+        for (int i = 0; i < cursors.Count; i++)
+        {
+            // if the penalty is somehow still running, don't let them move. Shouldn't be possible though
+            if (cursors[i].IsPenalized)
+            {
+                continue;
+            }
+
+            // If a menuoption is hovered over, store it in under
+            MenuOption under = UIHitTester.GetAt<MenuOption>(cursors[i].ScreenPosition);
+
+            if (under == yesOption) yesHover = true;
+            if (under == noOption) noHover = true;
+
+            // Whoever pressed select first while over an option selects it
+            if (under != null && cursors[i].SelectPressedThisFrame)
+            {
+                under.Choose();
+                return;
+            }
+        }
+        yesOption.SetHighlighted(yesHover);
+        noOption.SetHighlighted(noHover);
+    }
+
+    private void OnQuitYes(MenuOption option)
+    {
+        menuOpen = false;
+        Cursor.visible = true;
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
+        #endif
+    }
+
+    private void OnQuitNo(MenuOption option)
+    {
+        if (isRestarting) return;
+        menuOpen = false;
+        yesOption.SetHighlighted(false);
+        noOption.SetHighlighted(false);
+        StartCoroutine(RestartGame());
+    }
+
+    private IEnumerator RestartGame()
+    {
+        isRestarting = true;
+        SetFrozenCursors(true);
+        
+        // Fade screen to black
+        yield return StartCoroutine(UI.FadeCG(0.5f, UI.BlackoutCG, 0, 1));
+        
+        // Reset the board
+        UI.HideQuitMenuCG();
+        foreach(Transform card in cardParent) Destroy(card.gameObject);
+        foreach(Transform xMark in xMarkParent) Destroy(xMark.gameObject);
+        for (int i = 0; i < hoveredViews.Count; i++)
+        {
+            hoveredViews[i] = null;
+        }
+
+        // Reset all variables
+        round = 0;
+        targetCard = null;
+        targetView = null;
+        winner = null;
+        
+        OpenGameplay();
+
+        yield return new WaitForSeconds(1.5f);
+        yield return StartCoroutine(UI.FadeCG(0.5f, UI.BlackoutCG, 1, 0));
+        isRestarting = false;
     }
     
 }
