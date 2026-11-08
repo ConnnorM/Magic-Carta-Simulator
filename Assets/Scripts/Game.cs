@@ -13,7 +13,7 @@ public class Game : MonoBehaviour
     // Card parent is the Game Board, or the GameObject where card prefabs live
     [SerializeField] private Transform cardParent;
     [SerializeField] private DeckDefinition[] deckDefinitions;
-    [SerializeField, Range (0.5f, 3.0f)] private float c2cSpacingScalar = 1.75f;
+    [SerializeField, Range (0.5f, 5.0f)] private float c2cSpacingScalar = 2.0f;
     [SerializeField, Range(0.5f, 1.0f)] private float xBoundScalar = 0.7f;
     [SerializeField, Range(0.5f, 1.0f)] private float yBoundScalar = 0.65f;
     
@@ -23,9 +23,10 @@ public class Game : MonoBehaviour
     private List<Vector2> cardPositions;
     private string mode = "Easy";
     private int cardsOnBoard = 25;
-    private int totalCardsInRound = 1;
+    private int totalCardsInRound = 5;
     private int round = 0;
     private Card targetCard = null;
+    private Deck deck;
 
     private CardView targetView = null;
     // Keeps track of when players can start clicking and when targetCard has been found
@@ -83,6 +84,13 @@ public class Game : MonoBehaviour
         noOption.Chosen += OnQuitNo;
         // OpenMainMenu();
         OpenGameplay();
+    }
+
+    void Awake()
+    {
+        // Trying to fix some lag and crashing
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;   // try 30 if it still runs hot
     }
 
     // Update is called once per frame
@@ -162,13 +170,6 @@ public class Game : MonoBehaviour
                 // Connect the player to a bubble
                 playerBubbles[0].Bind(p1);
             }
-
-            // Make sure each player starts a new game at default values
-            foreach (Player p in players)
-            {
-                p.ResetForNewGame();
-            }
-            RefreshPlayerBubbles();
             
             // Add a null entry in HoveredViews since the player isn't hovering anything
             hoveredViews.Add(null);
@@ -178,7 +179,7 @@ public class Game : MonoBehaviour
             // Instantiate a new cursor
             PlayerCursor cursor = Instantiate(cursorPrefab, cursorParent);
             // Give the cursor its player
-            cursor.Init(p1, cursorParent, new KeyboardInput(Keyboard.current));
+            cursor.Init(p1, cursorParent, CreateInputForPlayer());
             // Add the cursor to the list of cursors
             cursors.Add(cursor);
         }
@@ -193,11 +194,8 @@ public class Game : MonoBehaviour
         // Don't allow cursors to move until they've appeared
         SetFrozenCursors(true);
         
-        // Load and start background music
-        audioManager.PlayRandomMusic();
-        
         // Create a deck
-        Deck deck = new Deck(DeckLoader.LoadDeck(deckDefinitions[0]));
+        deck = new Deck(DeckLoader.LoadDeck(deckDefinitions[0]));
         // Shuffle the deck
         deck.Shuffle();
         // Get the cards for the board
@@ -206,7 +204,7 @@ public class Game : MonoBehaviour
         ShowBoard(board);
         
         // Create the canvas and set up the camera
-        Canvas canvas = xMarkParent.GetComponentInParent<Canvas>();
+        Canvas canvas = xMarkParent.GetComponentInParent<Canvas>().rootCanvas;
         uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
         
         // Pick a card, show text1 and play voice1, wait for correct choice, show line 2 and play voice2
@@ -215,6 +213,8 @@ public class Game : MonoBehaviour
 
     private IEnumerator StartGame(List<Card> board)
     {
+        // Load and start background music
+        if (!audioManager.IsMusicPlaying) audioManager.PlayRandomMusic();
         // On the first round, do the Ready Go countdown
         yield return StartCoroutine(ShowReadyGo());
         
@@ -272,6 +272,8 @@ public class Game : MonoBehaviour
         // Wait till the Correct card sound effect has stopped
         yield return null;
         yield return new WaitWhile(() => audioManager.IsSfxPlaying);
+        // Wait until Voice1 has stopped in case someone got it instantly
+        yield return new WaitWhile(() => audioManager.IsVoicePlaying);
         
         // Remove current target from the screen
         yield return new WaitForSeconds(0.5f);
@@ -464,7 +466,7 @@ public class Game : MonoBehaviour
                 attempts += 1;
                 if (attempts > 200)
                 {
-                    Debug.LogWarning($"Exceeded 200 attempts on card {i}");
+                    Debug.LogWarning($"Exceeded 200 attempts on card {i}: {deck.CardsList[i].cardName}");
                     break;
                 }
             }
@@ -597,7 +599,10 @@ public class Game : MonoBehaviour
         SetFrozenCursors(true);
         
         // Fade screen to black
-        yield return StartCoroutine(UI.FadeCG(0.5f, UI.BlackoutCG, 0, 1));
+        Coroutine fadeToBlack = StartCoroutine(UI.FadeCG(0.5f, UI.BlackoutCG, 0, 1));
+        Coroutine fadeOutMusic = audioManager.FadeOutMusic(1.5f);
+        yield return fadeToBlack; // Just wait for blackout, music can continue fading into the 'loading screen'
+        yield return fadeOutMusic;
         
         // Reset the board
         UI.HideQuitMenuCG();
@@ -613,12 +618,30 @@ public class Game : MonoBehaviour
         targetCard = null;
         targetView = null;
         winner = null;
+        foreach (Player player in players)
+        {
+            player.ResetForNewGame();
+        }
+        RefreshPlayerBubbles();
         
         OpenGameplay();
 
         yield return new WaitForSeconds(1.5f);
         yield return StartCoroutine(UI.FadeCG(0.5f, UI.BlackoutCG, 1, 0));
         isRestarting = false;
+    }
+
+    private ICursorInput CreateInputForPlayer()
+    {
+        foreach (Joystick js in Joystick.all)
+        {
+            if (js.displayName.Contains("Joy-Con"))
+            {
+                return new JoyConInput(js, new[] {"trigger", "button2", "button3", "button4"}, 0f);
+            }
+        }
+        // No Joy-Con detected, so use keyboard
+        return new KeyboardInput(Keyboard.current);
     }
     
 }

@@ -51,7 +51,7 @@ public class PlayerCursor : MonoBehaviour
         
         // Find the canvas that contains the cursor area and pick null or its camera
         // Pick the camera needed to convert screen positions into canvas positions for this Canvas' render mode
-        Canvas canvas = area.GetComponentInParent<Canvas>();
+        Canvas canvas = area.GetComponentInParent<Canvas>().rootCanvas;
         cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
         
         // Set playerNumText
