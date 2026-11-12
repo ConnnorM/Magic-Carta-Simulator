@@ -207,6 +207,9 @@ public class Game : MonoBehaviour
         Canvas canvas = xMarkParent.GetComponentInParent<Canvas>().rootCanvas;
         uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
         
+        // Before beginning the game, start the new Session for data collection
+        DataLogger.StartNewSession();
+        
         // Pick a card, show text1 and play voice1, wait for correct choice, show line 2 and play voice2
         StartCoroutine(StartGame(board));
     }
@@ -258,12 +261,14 @@ public class Game : MonoBehaviour
         // Officially start the round
         roundInProgress = true;
         hoverEnabled = true;
+        // Reset all the playerOverlays and start data collection
         for (int i = 0; i < playerOverlays.Count; i++)
         {
             if (hoveredViews[i] != null)
             {
                 playerOverlays[i].Show(hoveredViews[i]);
             }
+            players[i].DataCollector.RoundStart(cursors[i].AnchoredPosition, round + 1, targetCard);
         }
 
         // Don't progress the round until the round has finished (targetCard was selected)
@@ -300,6 +305,11 @@ public class Game : MonoBehaviour
         yield return new WaitWhile(() => audioManager.IsVoicePlaying);
         
         // Wait for a bit after voice2 ends before removing everything off the screen
+        // In the meantime, write the data to our CSV
+        foreach (Player p in players)
+        {
+            p.DataCollector.WriteRow();
+        }
         yield return new WaitForSeconds(2.5f);
         
         // Remove quote1
@@ -377,8 +387,9 @@ public class Game : MonoBehaviour
             foreach (HoverOverlay playerOverlay in playerOverlays) playerOverlay.Hide();
             roundInProgress = false;
             hoverEnabled = false;
-            // Set the round winner and handle scoring
+            // Set the round winner and handle data collection + scoring
             winner = player;
+            winner.DataCollector.OnFoundTarget(cursors[players.IndexOf(winner)].AnchoredPosition);
             // reset other's streaks
             winner.IncreaseStreak();
             foreach (Player p in players)
@@ -510,9 +521,9 @@ public class Game : MonoBehaviour
     // Freezes/unfreezes all cursors
     private void SetFrozenCursors(bool input)
     {
-        foreach (PlayerCursor curCursor in cursors)
+        for (int i = 0; i < cursors.Count; i++)
         {
-            curCursor.SetFrozen(input);
+            cursors[i].SetFrozen(input);
         }
     }
 

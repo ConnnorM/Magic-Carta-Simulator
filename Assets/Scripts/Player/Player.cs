@@ -8,6 +8,9 @@ public class Player
     // Initialize the player's points
     public int points { get; private set; }
     public int streak { get; private set; }
+    
+    // Data collector
+    public PlayerDataCollector DataCollector { get; private set; }
 
     public Player(int playerId, string playerName)
     {
@@ -15,6 +18,8 @@ public class Player
         this.name = playerName;
         points = 0;
         streak = 0;
+        // Create a new data collector and give it this player
+        DataCollector = new PlayerDataCollector(this);
     }
 
     public void AddPoints(int newPoints)

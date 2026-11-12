@@ -27,6 +27,8 @@ public class PlayerCursor : MonoBehaviour
     public float Speed => speed;
     // Allows different user input devices
     private ICursorInput input;
+    // Allows us to get the cursor position
+    public Vector2 AnchoredPosition => rt.anchoredPosition;
 
     public bool SelectPressedThisFrame => !isPenalized && input != null && input.SelectPressedThisFrame();
     // Readonly property to get cursor's position in screen pixels
