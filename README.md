@@ -11,7 +11,8 @@ This project contains 3 parts:
 - [All Magic Carta Quotes and Sound Effects Youtube Video](https://www.youtube.com/watch?v=_45cjfqUoJA)
 
 ## State Description
-- From 90 possible cards, 25 are randomly selected and placed on the game board in random locations and rotations
+- From 90 possible cards, 25 are randomly selected and placed on the game board
+  - Each card has a randomly generated rotation and semi-randomly generated position (cards can't be too close to one another)
 - Each round, a target card is chosen from the first 5 cards selected for the board
   - When a target is correctly selected, it is removed from the board and a new target is selected. 5 Rounds are played per game)
   - 21 <= Number of Cards <= 25
@@ -30,6 +31,8 @@ In each round, data is collected for each player:
 - distance: euclidean distance from player's cursor's starting position to the target card
 - editor: 1 if playing in the Unity Editor, 0 otherwise
 ### To Do:
+- rounds_played: how many rounds has this person played?
+- board: all of the cards in the state and their positions/rotations
 - target_location_x: x position of the target on screen
 - target_location_y: y position of the target on screen
 - target_rotation: rotation of the target card
@@ -49,12 +52,11 @@ Goal is to simulate a particular player's behavior by predicting how long it wil
 - Rolling window: more heavily weight recent performance for learning/forgetting/recency bias
 - Add random noise: hesitation, distractor effects, position of click on target, 
 - Data is combined with some noise to generate a person's score given the board and target card
+- Not sure exactly how to make predictions/simulate this yet. Still deciding what technique to use
 
 ## To Do:
+- Finish data collection
 - Determine simulation/prediction strategy
-  - Giant formula with weights
-      - Use MC to generate weights?
-- Finish bare minimum data collection
 - Set up simulation/prediction and data visualization
 
 ## Presentation Details:
