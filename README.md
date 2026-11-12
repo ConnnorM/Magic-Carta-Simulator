@@ -19,7 +19,7 @@ This project contains 3 parts:
 
 ## Data Collection
 In each round, data is collected for each player:
-# Implemented
+### Implemented
 - session_id: unique session for each game (5 rounds)
 - player_id: unique tag for players used to generate their player profile
 - round: which round in the game (1-5)
@@ -29,7 +29,7 @@ In each round, data is collected for each player:
 - time_to_correct: time from quote1 playing to selecting the target card (blank if the player lost the round)
 - distance: euclidean distance from player's cursor's starting position to the target card
 - editor: 1 if playing in the Unity Editor, 0 otherwise
-# To Do:
+### To Do:
 - target_location_x: x position of the target on screen
 - target_location_y: y position of the target on screen
 - target_rotation: rotation of the target card
