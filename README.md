@@ -28,19 +28,19 @@ In each round, data is collected for each player:
 - target_card_name: the name of the target card
 - found_target: 1 if the player found the card, 0 otherwise
 - time_to_correct: time from quote1 playing to selecting the target card (blank if the player lost the round)
+- first_move_delay: time from quote1 begin to user's first directional input
+- wrong_card_count: how many incorrect guesses this round for each player
+- wrong_card_ids: list of cards that were guessed incorrectly
 - distance: euclidean distance from player's cursor's starting position to the target card
 - editor: 1 if playing in the Unity Editor, 0 otherwise
 ### To Do:
+- WIP: cursor_input_type: mouse, joystick, gamepad, keyboard, etc.
 - rounds_played: how many rounds has this person played?
 - board: all of the cards in the state and their positions/rotations
 - target_location_x: x position of the target on screen
 - target_location_y: y position of the target on screen
 - target_rotation: rotation of the target card
-- count_incorrect_guesses: how many incorrect guesses were made
-- incorrect_guesses: list of cards that were guessed incorrectly
 - target_visibility: percentage of the target card that is visible (cards can overlap)
-- cursor_input_type: mouse, joystick, gamepad, keyboard, etc.
-- time_to_first_move: time from quote1 begin to user's first directional input
 - Player -> Card Affinity Mapping
   - For each card, has the player played that game?
 - Card Similarity Mapping
