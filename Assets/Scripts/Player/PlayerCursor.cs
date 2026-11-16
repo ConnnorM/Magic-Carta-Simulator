@@ -27,6 +27,11 @@ public class PlayerCursor : MonoBehaviour
     public float Speed => speed;
     // Allows different user input devices
     private ICursorInput input;
+
+    public CursorInputType InputType => input != null ? input.InputType : CursorInputType.Unknown;
+    private string deviceName;
+
+    public string DeviceName => deviceName;
     // Allows us to get the cursor position
     public Vector2 AnchoredPosition => rt.anchoredPosition;
 
@@ -45,11 +50,12 @@ public class PlayerCursor : MonoBehaviour
         rt = (RectTransform)transform;
     }
 
-    public void Init(Player player, RectTransform area, ICursorInput input)
+    public void Init(Player player, RectTransform area, ICursorInput input, string deviceName)
     {
         this.player = player;
         this.area = area;
         this.input = input;
+        this.deviceName = deviceName;
         
         // Find the canvas that contains the cursor area and pick null or its camera
         // Pick the camera needed to convert screen positions into canvas positions for this Canvas' render mode

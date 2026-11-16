@@ -5,9 +5,9 @@ using UnityEngine;
 
 public static class DataLogger
 {
-    private const string FileName = "CartaData.csv";
+    private const string RoundFileName = "Carta_Rounds.csv";
     // Column order here must match the order of fields in PlayerDataCollector.WriteRow
-    private const string Header =
+    private const string RoundsHeader =
         "session_id," +
         "player_id," +
         "round," +
@@ -16,7 +16,26 @@ public static class DataLogger
         "found_target," +
         "time_to_correct," +
         "distance," +
+        "first_move_delay," +
+        "wrong_card_count," +
+        "wrong_card_ids," +
+        "input_type," +
+        "input_device_name," +
         "editor";
+
+    public const string GuessFileName = "Carta_Guesses.csv";
+
+    public const string GuessesHeader =
+        "session_id," +
+        "player_id," +
+        "round," +
+        "target_card_id," +
+        "guess_number," +
+        "guessed_card_id," +
+        "guessed_card_name," +
+        "time_to_guess," +
+        "cursor_pos_x," +
+        "cursor_pos_y";
 
     private static string folder;
 
@@ -64,6 +83,11 @@ public static class DataLogger
 
     public static void AppendRow(string[] fields)
     {
+        AppendRow(RoundFileName, RoundsHeader, fields);
+    }
+
+    public static void AppendRow(string fileName, string header, string[] fields)
+    {
         string line = string.Join(",", System.Array.ConvertAll(fields, Escape));
 
         // Two attempts: if the first path fails, fall back to the persistent folder and retry
@@ -71,8 +95,8 @@ public static class DataLogger
         {
             try
             {
-                string path = Path.Combine(GetFolder(), FileName);
-                if (!File.Exists(path)) File.AppendAllText(path, Header + "\n", Encoding.UTF8);
+                string path = Path.Combine(GetFolder(), fileName);
+                if (!File.Exists(path)) File.AppendAllText(path, header + "\n", Encoding.UTF8);
                 File.AppendAllText(path, line + "\n", Encoding.UTF8);
                 return;
             }

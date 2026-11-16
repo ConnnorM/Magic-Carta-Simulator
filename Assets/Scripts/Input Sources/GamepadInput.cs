@@ -7,10 +7,16 @@ public class GamepadInput : ICursorInput
     private readonly Gamepad pad;
     // Device rememebers which controllers belong to a player
     public Gamepad Device => pad;
+    private readonly string deviceName;
+    public string DeviceName => deviceName;
+    
+    // Stores Input type for retrieval
+    public CursorInputType InputType => CursorInputType.Gamepad;
     
     public GamepadInput(Gamepad pad)
     {
         this.pad = pad;
+        this.deviceName = this.pad.displayName;
     }
 
     public void Drive(PlayerCursor cursor, float deltaTime)

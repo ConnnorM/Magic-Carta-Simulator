@@ -5,12 +5,17 @@ public class KeyboardInput : ICursorInput
 {
     // readonly means it can only be set in the constructor
     private readonly Keyboard board;
-    // Device rememebers which input device belong to a player
+    // Device remembers which input device belong to a player
     public Keyboard Device => board;
+    // Stores Input type for retrieval
+    public CursorInputType InputType => CursorInputType.Keyboard;
+    private readonly string deviceName;
+    public string DeviceName => deviceName;
     
     public KeyboardInput(Keyboard board)
     {
         this.board = board;
+        this.deviceName = this.board.displayName;
     }
 
     public void Drive(PlayerCursor cursor, float deltaTime)

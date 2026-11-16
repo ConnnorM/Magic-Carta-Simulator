@@ -10,11 +10,16 @@ public class JoyConInput : ICursorInput
     private readonly List<ButtonControl> selectButtons = new List<ButtonControl>();
     private readonly float rotationDegrees;
     public Joystick Device => joystick;
+    private readonly string deviceName;
+    public string DeviceName => deviceName;
+    // Stores Input type for retrieval
+    public CursorInputType InputType => CursorInputType.JoyCon;
 
     public JoyConInput(Joystick joystick, string[] selectButtonNames, float rotationDegrees)
     {
         this.joystick = joystick;
         this.rotationDegrees = rotationDegrees;
+        this.deviceName = this.joystick.displayName;
 
         // The Joy-Con reports its stick as a hat switch (digital, 8 directions)
         hat = joystick.TryGetChildControl<Vector2Control>("hat");

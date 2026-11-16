@@ -114,6 +114,7 @@ public class Game : MonoBehaviour
             // Do not update the hoveredView if the cursor is currently penalized
             if (cursors[i].IsPenalized) continue;
             
+            players[i].DataCollector.ObservePosition(cursors[i].AnchoredPosition);
             CardView under = UIHitTester.GetAt<CardView>(cursors[i].ScreenPosition);
             if (under != hoveredViews[i]) SetHover(i, under);
             if (cursors[i].SelectPressedThisFrame && under != null)
@@ -179,7 +180,7 @@ public class Game : MonoBehaviour
             // Instantiate a new cursor
             PlayerCursor cursor = Instantiate(cursorPrefab, cursorParent);
             // Give the cursor its player
-            cursor.Init(p1, cursorParent, CreateInputForPlayer());
+            cursor.Init(p1, cursorParent, CreateInputForPlayer(), cursor.DeviceName);
             // Add the cursor to the list of cursors
             cursors.Add(cursor);
         }
@@ -268,7 +269,7 @@ public class Game : MonoBehaviour
             {
                 playerOverlays[i].Show(hoveredViews[i]);
             }
-            players[i].DataCollector.RoundStart(cursors[i].AnchoredPosition, round + 1, targetCard);
+            players[i].DataCollector.RoundStart(cursors[i].AnchoredPosition, round + 1, targetCard, cursors[i].InputType, cursors[i].DeviceName);
         }
 
         // Don't progress the round until the round has finished (targetCard was selected)
@@ -425,6 +426,8 @@ public class Game : MonoBehaviour
                 // Remove the X Mark after 3 seconds if it's not already gone
                 Destroy(xMark.gameObject, penaltySeconds);
             }
+            // Record the incorrect guess
+            player.DataCollector.RecordWrongGuess(view.Card, cursors[players.IndexOf(player)].AnchoredPosition);
             // Freeze the cursor for some time and animate the jiggle
             cursors[players.IndexOf(player)].StartPenalty(penaltySeconds);
         }

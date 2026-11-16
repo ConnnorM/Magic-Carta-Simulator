@@ -3,14 +3,20 @@ using UnityEngine.InputSystem;
 
 public class JoystickInput : ICursorInput
 {
+    
     // readonly means it can only be set in the constructor
     private readonly Joystick joystick;
-    // Device rememebers which controllers belong to a player
+    // Device remembers which controllers belong to a player
     public Joystick Device => joystick;
+    // Stores Input type for retrieval
+    public CursorInputType InputType => CursorInputType.Joystick;
+    private readonly string deviceName;
+    public string DeviceName => deviceName;
     
     public JoystickInput(Joystick joystick)
     {
         this.joystick = joystick;
+        this.deviceName = this.joystick.displayName;
     }
 
     public void Drive(PlayerCursor cursor, float deltaTime)
