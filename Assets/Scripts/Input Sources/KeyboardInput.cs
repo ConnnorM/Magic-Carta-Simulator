@@ -9,13 +9,10 @@ public class KeyboardInput : ICursorInput
     public Keyboard Device => board;
     // Stores Input type for retrieval
     public CursorInputType InputType => CursorInputType.Keyboard;
-    private readonly string deviceName;
-    public string DeviceName => deviceName;
     
     public KeyboardInput(Keyboard board)
     {
         this.board = board;
-        this.deviceName = this.board.displayName;
     }
 
     public void Drive(PlayerCursor cursor, float deltaTime)

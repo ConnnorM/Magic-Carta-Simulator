@@ -7,8 +7,6 @@ public class PlayerDataCollector
     private readonly Player player;
     // Cursor type
     private CursorInputType inputType = CursorInputType.Unknown;
-
-    private string inputDeviceName;
     // Time
     private double q1StartTime;
     private double firstMoveTime;
@@ -31,14 +29,13 @@ public class PlayerDataCollector
         this.player = player;
     }
 
-    public void RoundStart(Vector2 cursorPosition, int roundNumber, Card targetCard, CursorInputType inputType, string inputDeviceName)
+    public void RoundStart(Vector2 cursorPosition, int roundNumber, Card targetCard, CursorInputType inputType)
     {
         this.q1StartTime = Time.realtimeSinceStartupAsDouble;
         this.round = roundNumber;
         this.target = targetCard;
         this.startPosition = cursorPosition;
         this.inputType = inputType;
-        this.inputDeviceName = inputDeviceName;
         isTiming = true;
         hasMoved = false;
         // Reset the list of wrong guesses
@@ -118,7 +115,6 @@ public class PlayerDataCollector
             wrongCardIds.Count.ToString(),
             string.Join(";", wrongCardIds),
             inputType.ToString(),
-            inputDeviceName,
             Application.isEditor ? "1" : "0"
         });
     }

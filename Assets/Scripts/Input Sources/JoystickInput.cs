@@ -10,13 +10,10 @@ public class JoystickInput : ICursorInput
     public Joystick Device => joystick;
     // Stores Input type for retrieval
     public CursorInputType InputType => CursorInputType.Joystick;
-    private readonly string deviceName;
-    public string DeviceName => deviceName;
     
     public JoystickInput(Joystick joystick)
     {
         this.joystick = joystick;
-        this.deviceName = this.joystick.displayName;
     }
 
     public void Drive(PlayerCursor cursor, float deltaTime)

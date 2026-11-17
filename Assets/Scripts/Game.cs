@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -180,7 +181,7 @@ public class Game : MonoBehaviour
             // Instantiate a new cursor
             PlayerCursor cursor = Instantiate(cursorPrefab, cursorParent);
             // Give the cursor its player
-            cursor.Init(p1, cursorParent, CreateInputForPlayer(), cursor.DeviceName);
+            cursor.Init(p1, cursorParent, CreateInputForPlayer());
             // Add the cursor to the list of cursors
             cursors.Add(cursor);
         }
@@ -195,6 +196,9 @@ public class Game : MonoBehaviour
         // Don't allow cursors to move until they've appeared
         SetFrozenCursors(true);
         
+        // Before beginning the game, start the new Session for data collection
+        DataLogger.StartNewSession();
+        
         // Create a deck
         deck = new Deck(DeckLoader.LoadDeck(deckDefinitions[0]));
         // Shuffle the deck
@@ -207,9 +211,6 @@ public class Game : MonoBehaviour
         // Create the canvas and set up the camera
         Canvas canvas = xMarkParent.GetComponentInParent<Canvas>().rootCanvas;
         uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-        
-        // Before beginning the game, start the new Session for data collection
-        DataLogger.StartNewSession();
         
         // Pick a card, show text1 and play voice1, wait for correct choice, show line 2 and play voice2
         StartCoroutine(StartGame(board));
@@ -269,7 +270,7 @@ public class Game : MonoBehaviour
             {
                 playerOverlays[i].Show(hoveredViews[i]);
             }
-            players[i].DataCollector.RoundStart(cursors[i].AnchoredPosition, round + 1, targetCard, cursors[i].InputType, cursors[i].DeviceName);
+            players[i].DataCollector.RoundStart(cursors[i].AnchoredPosition, round + 1, targetCard, cursors[i].InputType);
         }
 
         // Don't progress the round until the round has finished (targetCard was selected)
@@ -358,6 +359,9 @@ public class Game : MonoBehaviour
     {
         // Generate all the positions for cards to be placed
         cardPositions = GenerateAllCardPositions();
+        // Generate rows for data collection
+        var rows = new List<string[]>();
+        RectTransform boardRect = (RectTransform)cardParent;
         
         // For each Card on the board, Instantiate, place, and initialize it
         for (int i = 0; i < board.Count; i++)
@@ -365,11 +369,26 @@ public class Game : MonoBehaviour
             CardView view = Instantiate(cardPrefab, cardParent);
             // Register Game's OnCardClicked method as a subscriber to CardView view's OnCardClicked event, Clicked
             view.Clicked += HandleCardClicked;
-            view.Place(cardPositions[i], Random.Range(0, 360));
+            float angle = Random.Range(0, 360);
+            view.Place(cardPositions[i], angle);
             // Call init to set the cards's values and spawn it
             view.Init(board[i]);
             
+            rows.Add(new[]
+            {
+                DataLogger.SessionId,
+                board[i].id.ToString(),
+                board[i].cardName,
+                DataLogger.Num(cardPositions[i].x),
+                DataLogger.Num(cardPositions[i].y),
+                DataLogger.Num(angle),
+                i.ToString(),                                       // stack_order: 0 = bottom, higher = drawn on top
+                i < totalCardsInRound ? (i + 1).ToString() : "",    // target_order: 1 = first target, blank if never a target
+                DataLogger.Num(boardRect.rect.width),
+                DataLogger.Num(boardRect.rect.height)
+            });
         }
+        DataLogger.AppendRows(DataLogger.BoardFileName, DataLogger.BoardHeader, rows);
     }
 
     // OnCardClicked, but for all input devices

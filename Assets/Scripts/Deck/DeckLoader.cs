@@ -3,7 +3,7 @@ using UnityEngine;
 
 public static class DeckLoader
 {
-    private static int numFields = 4;
+    private static int minFields = 4;
     public static List<Card> LoadDeck(DeckDefinition deckDefinition)
     {
         // Create empty list to populate and return
@@ -73,13 +73,9 @@ public static class DeckLoader
             string[] curLine = csvLines[i].Split(new[] { "\t" }, System.StringSplitOptions.None);
             
             // Make sure we got the correct number of fields
-            if (curLine.Length != numFields)
+            if (curLine.Length < minFields)
             {
-                Debug.LogWarning($"Number of fields does not equal {numFields}: " + curLine[0] + " " + curLine[1]);
-                for (int j = 0; j < curLine.Length; j++)
-                {
-                    Debug.LogWarning($"Field {j}: {curLine[j]}");
-                }
+                Debug.LogWarning($"Row {i + 1}: expected at least {minFields} fields but found {curLine.Length}: {csvLines[i]}");
                 continue;
             }
 
