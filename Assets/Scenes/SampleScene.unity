@@ -2227,7 +2227,7 @@ MonoBehaviour:
   hoverOverlayParent: {fileID: 1576132292}
   cursorPrefab: {fileID: 2572128822311357529, guid: 2beb55c066d10494b871310c79c56277, type: 3}
   cursorParent: {fileID: 1802541026}
-  penaltySeconds: 0.5
+  penaltySeconds: 3
   playerBubbles:
   - {fileID: 463866174}
   cursorStartPositions:
