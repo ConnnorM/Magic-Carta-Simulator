@@ -28,8 +28,12 @@ public class Game : MonoBehaviour
     private int round = 0;
     private Card targetCard = null;
     private Deck deck;
+    private List<Card> board;
+    private List<int> targetIndices = new List<int>();
 
     private CardView targetView = null;
+
+    private List<CardView> currentViews = new List<CardView>();
     // Keeps track of when players can start clicking and when targetCard has been found
     private bool roundInProgress = false;
     
@@ -204,19 +208,24 @@ public class Game : MonoBehaviour
         // Shuffle the deck
         deck.Shuffle();
         // Get the cards for the board
-        List<Card> board = deck.SelectBoard(cardsOnBoard);
+        board = deck.SelectBoard(cardsOnBoard);
+        // Select the order of target cards
+        targetIndices.Clear();
+        for (int i = 0; i < board.Count; i++) targetIndices.Add(i);
+        targetIndices = Deck.ShuffleIndices(targetIndices);
+        
         // Generate card positions and spawn cards
-        ShowBoard(board);
+        ShowBoard();
         
         // Create the canvas and set up the camera
         Canvas canvas = xMarkParent.GetComponentInParent<Canvas>().rootCanvas;
         uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
         
         // Pick a card, show text1 and play voice1, wait for correct choice, show line 2 and play voice2
-        StartCoroutine(StartGame(board));
+        StartCoroutine(StartGame());
     }
 
-    private IEnumerator StartGame(List<Card> board)
+    private IEnumerator StartGame()
     {
         // Load and start background music
         if (!audioManager.IsMusicPlaying) audioManager.PlayRandomMusic();
@@ -226,7 +235,7 @@ public class Game : MonoBehaviour
         // MAIN GAMEPLAY LOOP CONTROL: play rounds until condition is met
         while (round < totalCardsInRound)
         {
-            targetCard = board[round];
+            targetCard = board[targetIndices[round]];
             // Waits until a round has finished
             yield return StartCoroutine(PlayRound());
             round++;
@@ -256,6 +265,9 @@ public class Game : MonoBehaviour
     {
         // Show the points for this round
         UI.ShowNextPointsCG(round + 1);
+        // Set the target view and calculate its current visibility
+        targetView = currentViews.Find(view => view.Card == targetCard);
+        float targetVisibility = CalculateVisibility(targetView);
         // Show the first quote as text on screen
         UI.ShowQuote(targetCard.text1);
         // Load the first quote and play it
@@ -270,7 +282,7 @@ public class Game : MonoBehaviour
             {
                 playerOverlays[i].Show(hoveredViews[i]);
             }
-            players[i].DataCollector.RoundStart(cursors[i].AnchoredPosition, round + 1, targetCard, cursors[i].InputType);
+            players[i].DataCollector.RoundStart(cursors[i].AnchoredPosition, round + 1, targetCard, cursors[i].InputType, targetVisibility);
         }
 
         // Don't progress the round until the round has finished (targetCard was selected)
@@ -284,6 +296,7 @@ public class Game : MonoBehaviour
         
         // Remove current target from the screen
         yield return new WaitForSeconds(0.5f);
+        currentViews.Remove(targetView);
         Destroy(targetView.gameObject);
         for (int i = 0; i < hoveredViews.Count; i++)
         {
@@ -355,8 +368,10 @@ public class Game : MonoBehaviour
         SetFrozenCursors(false);
     }
 
-    private void ShowBoard(List<Card> board)
+    private void ShowBoard()
     {
+        // Clear the list of views
+        currentViews.Clear();
         // Generate all the positions for cards to be placed
         cardPositions = GenerateAllCardPositions();
         // Generate rows for data collection
@@ -367,12 +382,15 @@ public class Game : MonoBehaviour
         for (int i = 0; i < board.Count; i++)
         {
             CardView view = Instantiate(cardPrefab, cardParent);
+            currentViews.Add(view);
             // Register Game's OnCardClicked method as a subscriber to CardView view's OnCardClicked event, Clicked
             view.Clicked += HandleCardClicked;
             float angle = Random.Range(0, 360);
             view.Place(cardPositions[i], angle);
             // Call init to set the cards's values and spawn it
             view.Init(board[i]);
+            
+            int targetIndex = targetIndices.IndexOf(i);
             
             rows.Add(new[]
             {
@@ -383,7 +401,7 @@ public class Game : MonoBehaviour
                 DataLogger.Num(cardPositions[i].y),
                 DataLogger.Num(angle),
                 i.ToString(),                                       // stack_order: 0 = bottom, higher = drawn on top
-                i < totalCardsInRound ? (i + 1).ToString() : "",    // target_order: 1 = first target, blank if never a target
+                targetIndex >= 0 && targetIndex < totalCardsInRound ? (targetIndex + 1).ToString() : "",    // target_order: 1 = first target, blank if never a target
                 DataLogger.Num(boardRect.rect.width),
                 DataLogger.Num(boardRect.rect.height)
             });
@@ -403,7 +421,6 @@ public class Game : MonoBehaviour
         if (view.Card == targetCard)
         {
             audioManager.PlaySoundEffect(Sfx.SelectCorrectCard);
-            targetView = view;
             foreach (HoverOverlay playerOverlay in playerOverlays) playerOverlay.Hide();
             roundInProgress = false;
             hoverEnabled = false;
@@ -651,6 +668,7 @@ public class Game : MonoBehaviour
         targetCard = null;
         targetView = null;
         winner = null;
+        board.Clear();
         foreach (Player player in players)
         {
             player.ResetForNewGame();
@@ -675,6 +693,71 @@ public class Game : MonoBehaviour
         }
         // No Joy-Con detected, so use keyboard
         return new KeyboardInput(Keyboard.current);
+    }
+
+    // Returns the fraction (0 to 1) of the target card's area that isn't covered by cards drawn above it.
+    // 1.0 = fully visible, 0.0 = completely hidden. Returns -1 if the target isn't on the board.
+    // It works by sampling: lay a grid of points over the target card and count how many
+    // of them sit underneath another card. More samples give a more precise answer.
+    private float CalculateVisibility(CardView targetView, int samplesX = 50, int samplesY = 75)
+    {
+        // currentViews is in stack order (index 0 = bottom, last = top), so the target's
+        // index tells us which cards are drawn above it: everything after it in the list
+        int targetIndex = currentViews.IndexOf(targetView);
+        if (targetIndex < 0)
+        {
+            Debug.LogWarning("CalculateVisibility: target not in currentViews");
+            return -1f;
+        }
+
+        // rect is the card's rectangle in its OWN local space (before rotation or position).
+        // The card's rotation and position are applied later by TransformPoint
+        RectTransform targetRt = (RectTransform)targetView.transform;
+        Rect r = targetRt.rect;
+
+        // How many sample points land under some other card
+        int covered = 0;
+
+        // Walk a samplesX by samplesY grid across the card's face
+        for (int ix = 0; ix < samplesX; ix++)
+        {
+            for (int iy = 0; iy < samplesY; iy++)
+            {
+                // Turn grid indices into a point in the target's local space.
+                // (ix + 0.5f) / samplesX is a 0-to-1 fraction across the card; the 0.5 puts the point in the
+                // centre of its grid cell instead of on an edge. Multiplying by width/height and adding
+                // xMin/yMin scales that fraction to the card's actual size and offset.
+                Vector2 local = new Vector2(
+                    r.xMin + (ix + 0.5f) / samplesX * r.width,
+                    r.yMin + (iy + 0.5f) / samplesY * r.height);
+
+                // Convert that point from the target's local space into world space.
+                // This applies the card's position, rotation, and scale for us, so the point
+                // ends up exactly where it appears on the board
+                Vector3 world = targetRt.TransformPoint(local);
+
+                // Is this point covered by any card drawn above the target?
+                for (int j = targetIndex + 1; j < currentViews.Count; j++)
+                {
+                    RectTransform other = (RectTransform)currentViews[j].transform;
+
+                    // Convert the world point into the OTHER card's local space, undoing that card's
+                    // rotation and position. In its own local space the card is just an upright
+                    // rectangle, so checking whether the point is inside it is simple
+                    Vector3 inOther = other.InverseTransformPoint(world);
+
+                    if (other.rect.Contains(inOther))
+                    {
+                        // Covered. One covering card is enough, so skip the rest
+                        covered++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Visible fraction = 1 minus the covered fraction
+        return 1f - (float)covered / (samplesX * samplesY);
     }
     
 }

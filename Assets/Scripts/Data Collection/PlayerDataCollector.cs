@@ -21,6 +21,8 @@ public class PlayerDataCollector
     private int round;
     private Card target;
     private bool foundTarget;
+
+    private float targetVisibility;
     // Guesses
     private readonly List<int> wrongCardIds = new List<int>();
 
@@ -29,13 +31,14 @@ public class PlayerDataCollector
         this.player = player;
     }
 
-    public void RoundStart(Vector2 cursorPosition, int roundNumber, Card targetCard, CursorInputType inputType)
+    public void RoundStart(Vector2 cursorPosition, int roundNumber, Card targetCard, CursorInputType inputType, float targetVisibility)
     {
         this.q1StartTime = Time.realtimeSinceStartupAsDouble;
         this.round = roundNumber;
         this.target = targetCard;
         this.startPosition = cursorPosition;
         this.inputType = inputType;
+        this.targetVisibility = targetVisibility;
         isTiming = true;
         hasMoved = false;
         // Reset the list of wrong guesses
@@ -110,6 +113,7 @@ public class PlayerDataCollector
             round.ToString(),
             target.id.ToString(),
             target.cardName,
+            DataLogger.Num(targetVisibility),
             foundTarget ? "1" : "0",
             tCorrect,
             dist,

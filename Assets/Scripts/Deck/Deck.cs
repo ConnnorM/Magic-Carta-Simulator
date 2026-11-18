@@ -30,6 +30,24 @@ public class Deck
             (cardsList[i], cardsList[randomIndex]) = (cardsList[randomIndex], cardsList[i]);
         }
     }
+    
+    public static List<int> ShuffleIndices(List<int> indices)
+    {
+        // Counting up/down doesn't actually matter
+        for (int i = indices.Count - 1; i > 0; i--)
+        {
+            int randomIndex = Random.Range(0, i + 1);
+            
+            // Standard swapping with temporary variables
+            //Card temp = cardsList[randomIndex];
+            //cardsList[randomIndex] = cardsList[i];
+            //cardsList[i] = temp;
+            
+            // A nicer way to swap using tuples
+            (indices[i], indices[randomIndex]) = (indices[randomIndex], indices[i]);
+        }
+        return indices;
+    }
 
     // Returns the subset of cards for the board
     public List<Card> SelectBoard(int cardsOnBoard)

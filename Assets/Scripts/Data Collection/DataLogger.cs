@@ -14,6 +14,7 @@ public static class DataLogger
         "round," +
         "target_card_id," +
         "target_card_name," +
+        "target_card_visibility," +
         "found_target," +
         "time_to_correct," +
         "distance," +
