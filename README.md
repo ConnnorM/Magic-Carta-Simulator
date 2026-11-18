@@ -36,13 +36,13 @@ In each round, data is collected for each player:
 - target_location_y: y position of the target on screen
 - target_rotation: rotation of the target card
 - distractors (head color, age, gender)
+- Player -> Card Affinity Mapping
+  - For each card, has the player played that game?
 - distance: euclidean distance from player's cursor's starting position to the target card
 - editor: 1 if playing in the Unity Editor, 0 otherwise
 ### To Do:
 - rounds_played: how many rounds has this person played?
 - target_visibility: percentage of the target card that is visible (cards can overlap)
-- Player -> Card Affinity Mapping
-  - For each card, has the player played that game?
 - num_distractors: how many distractors are on the board 
 
 ## Simulation / Prediction
