@@ -35,6 +35,7 @@ In each round, data is collected for each player:
 - target_location_x: x position of the target on screen
 - target_location_y: y position of the target on screen
 - target_rotation: rotation of the target card
+- target_visibility: percentage of the target card that is visible (cards can overlap)
 - distractors (head color, age, gender)
 - Player -> Card Affinity Mapping
   - For each card, has the player played that game?
@@ -42,7 +43,6 @@ In each round, data is collected for each player:
 - editor: 1 if playing in the Unity Editor, 0 otherwise
 ### To Do:
 - rounds_played: how many rounds has this person played?
-- target_visibility: percentage of the target card that is visible (cards can overlap)
 - num_distractors: how many distractors are on the board 
 
 ## Simulation / Prediction
@@ -53,9 +53,10 @@ Goal is to simulate a particular player's behavior by predicting how long it wil
 - Not sure exactly how to make predictions/simulate this yet. Still deciding what technique to use
 
 ## To Do:
-- Finish data collection
+- Collect data
 - Determine simulation/prediction strategy
-- Set up simulation/prediction and data visualization
+- Use data to create prediction engine
+- Tune prediction engine
 
 ## Presentation Details:
 - Make a story board: what did you try and why?
