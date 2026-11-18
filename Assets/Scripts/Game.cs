@@ -164,7 +164,7 @@ public class Game : MonoBehaviour
         if (players.Count == 0)
         {
             // Make a new player and add to the list of players
-            Player p1 = new Player(1, "Pascal");
+            Player p1 = new Player(1, "Connor");
             players.Add(p1);
             // Set up the player bubble
             if (playerBubbles.Count > 0)

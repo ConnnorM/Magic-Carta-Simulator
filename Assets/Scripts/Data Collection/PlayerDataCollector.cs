@@ -72,6 +72,7 @@ public class PlayerDataCollector
         {
             DataLogger.SessionId,
             player.id.ToString(),
+            player.name,
             round.ToString(),
             target.id.ToString(),
             wrongCardIds.Count.ToString(),   // guess number within this round
@@ -101,10 +102,11 @@ public class PlayerDataCollector
             dist = DataLogger.Num(Vector2.Distance(startPosition, gotTargetPosition));
         }
 
-        DataLogger.AppendRow(new[]
+        DataLogger.AppendRowRounds(new[]
         {
             DataLogger.SessionId,
             player.id.ToString(),
+            player.name,
             round.ToString(),
             target.id.ToString(),
             target.cardName,

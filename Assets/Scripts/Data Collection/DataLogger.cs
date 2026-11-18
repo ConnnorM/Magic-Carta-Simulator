@@ -10,6 +10,7 @@ public static class DataLogger
     private const string RoundsHeader =
         "session_id," +
         "player_id," +
+        "player_name," +
         "round," +
         "target_card_id," +
         "target_card_name," +
@@ -26,6 +27,7 @@ public static class DataLogger
     public const string GuessesHeader =
         "session_id," +
         "player_id," +
+        "player_name," +
         "round," +
         "target_card_id," +
         "guess_number," +
@@ -93,7 +95,7 @@ public static class DataLogger
         return field;
     }
 
-    public static void AppendRow(string[] fields)
+    public static void AppendRowRounds(string[] fields)
     {
         AppendRow(RoundFileName, RoundsHeader, fields);
     }
